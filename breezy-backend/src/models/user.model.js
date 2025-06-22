@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     biography: { type: String, default: '' },
     avatar: { type: String, default: '' },
     role: { type: String, enum: ['user', 'moderator', 'admin'], default: 'user' },
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' },
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     language: { type: String, default: 'fr' },
     suspended: { type: Boolean, default: false },
     banned: { type: Boolean, default: false }
