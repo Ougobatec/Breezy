@@ -15,6 +15,8 @@ app.get('/', (req, res) => {
     res.send('Welcome to Breezy Backend!');
 });
 
+app.use('/auth', require('./src/routes/auth.routes'));
+
 // Connect to MongoDB
 mongoose
     .connect(process.env.MONGODB_URI)
