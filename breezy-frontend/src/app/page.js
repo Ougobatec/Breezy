@@ -1,12 +1,12 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function HomePage() {
     const { user, loading, logout } = useAuth();
-
-    if (loading) return <div>Chargement...</div>;
-    if (!user) return null; // Redirection déjà gérée
+    if (loading) return <LoadingScreen />;
+    if (!user) return null;
 
     return (
         <>
