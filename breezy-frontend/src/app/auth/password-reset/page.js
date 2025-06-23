@@ -2,11 +2,10 @@
 import Header from "@/components/Header";
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-
-export default function PasswordChangePage() {
+function PasswordChangePageContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -80,5 +79,13 @@ export default function PasswordChangePage() {
                 {success && <div className="text-green-600 text-sm mt-4">{success}</div>}
             </div>
         </div>
+    );
+}
+
+export default function PasswordChangePage() {
+    return (
+        <Suspense fallback={<div>Chargement...</div>}>
+            <PasswordChangePageContent />
+        </Suspense>
     );
 }
