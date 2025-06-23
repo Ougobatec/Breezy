@@ -43,6 +43,21 @@ services:
       - mongo-data:/data/db
     networks:
       - breezy-net
+      
+
+
+  
+  nginx:
+    image: nginx:latest
+    container_name: balancer
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+
+    restart: always
+    networks:
+      - breezy-net
 
 volumes:
   mongo-data:
