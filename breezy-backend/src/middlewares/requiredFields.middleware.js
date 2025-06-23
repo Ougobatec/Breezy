@@ -3,7 +3,7 @@ module.exports = (requiredFields, location = "body") => {
         const data = req[location] || {};
         const missing = requiredFields.filter((field) => !(field in data));
         if (missing.length > 0) {
-            return res.status(400).json({ message: `Missing required fields: ${missing.join(", ")}` });
+            return res.status(400).json({ message: `Les champs suivants sont requis : ${missing.join(", ")}` });
         }
         next();
     };
