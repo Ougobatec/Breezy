@@ -21,6 +21,21 @@ services:
     networks:
       - breezy-net
 
+
+  frontend:
+    build:
+      context: ./breezy-frontend
+      dockerfile: Dockerfile
+    container_name: breezy-frontend
+    environment:
+      - NODE_ENV = production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - breezy-net
+
   mongo:
     image: mongo:latest
     container_name: mongo
