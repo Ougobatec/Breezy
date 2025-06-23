@@ -38,7 +38,7 @@ export default function HomePage() {
   return (
   <>
     <Header title="Breezy" showButtons={true} />
-    <div className="items-left justify-center pl-6">
+    <div className="items-left justify-center pl-6 pt-4">
       <span className="text-xl font-bold">Bienvenue {user.username}</span>
     </div>
     
