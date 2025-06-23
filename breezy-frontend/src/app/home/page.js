@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import LoadingScreen from "@/components/LoadingScreen";
 import React, { useEffect, useState } from "react";
 import Posts from "@/components/Posts";
+import BottomNav from "@/components/BottomNav";
 
 export default function HomePage() {
   const { user, token, loading, logout } = useAuth();
@@ -52,7 +53,10 @@ export default function HomePage() {
             (a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
         )}
     />
+    
     )}
+    <BottomNav />
   </>
+  
 );
 }
