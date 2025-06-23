@@ -8,7 +8,7 @@ exports.register = async (req, res) => {
     try {
         const existingUser = await User.findOne({ username });
         if (existingUser) {
-            return res.status(400).json({ message: "Username already exists" });
+            return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris" });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ name, username, email, password: hashedPassword });
@@ -50,10 +50,10 @@ exports.register = async (req, res) => {
             }
         }
         
-        res.status(201).json({ message: "User registered successfully" });
+        res.status(201).json({ message: "Utilisateur créé avec succès", user: { id: user._id, name: user.name, username: user.username, email: user.email } });
     } catch (error) {
-        console.error("Error registering user:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Erreur lors de la création de l'utilisateur :", error);
+        res.status(500).json({ message: "Erreur interne du serveur" });
     }
 }
 
@@ -62,17 +62,17 @@ exports.login = async (req, res) => {
     try {
         const user = await User.findOne({ username });
         if (!user) {
-            return res.status(400).json({ message: "Invalid username or password" });
+            return res.status(400).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(400).json({ message: "Invalid username or password" });
+            return res.status(400).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
         }
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).json({ token, user: { id: user._id, name: user.name, username: user.username, email: user.email } });
     } catch (error) {
-        console.error("Error logging in user:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Erreur lors de la connexion :", error);
+        res.status(500).json({ message: "Erreur interne du serveur" });
     }
 }
 
@@ -80,12 +80,12 @@ exports.authenticate = async (req, res) => {
     try {
         const user = await User.findById(req.user.userId).select("-password");
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "Utilisateur introuvable" });
         }
-        res.status(200).json({ message: "User authenticated successfully", user });
+        res.status(200).json({ message: "Utilisateur authentifié avec succès", user });
     } catch (error) {
-        console.error("Error authenticating user:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Erreur lors de l'authentification :", error);
+        res.status(500).json({ message: "Erreur interne du serveur" });
     }
 }
 
@@ -94,9 +94,9 @@ exports.passwordForget = async (req, res) => {
     try {
         const user = await User.findOne({ username });
         if (!user) {
-            return res.status(400).json({ message: "User not found" });
+            return res.status(400).json({ message: "Utilisateur non trouvé" });
         }
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '10m' });
         const resetLink = `${process.env.FRONTEND_URL}/auth/password-reset?token=${token}`;
 
         const transporter = nodemailer.createTransport({
@@ -132,10 +132,10 @@ exports.passwordForget = async (req, res) => {
         };
 
         await transporter.sendMail(mailOptions);
-        res.status(200).json({ message: "Password reset link sent to your email", resetLink });
+        res.status(200).json({ message: "Un email de réinitialisation a été envoyé si le compte existe", resetLink });
     } catch (error) {
-        console.error("Error in forgot password:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Erreur lors de la demande de réinitialisation de mot de passe :", error);
+        res.status(500).json({ message: "Erreur interne du serveur" });
     }
 }
 
@@ -145,17 +145,17 @@ exports.passwordReset = async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.userId);
         if (!user) {
-            return res.status(400).json({ message: "Invalid token or user not found" });
+            return res.status(400).json({ message: "Utilisateur non trouvé" });
         }
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedPassword;
         await user.save();
-        res.status(200).json({ message: "Password reset successfully" });
+        res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
     } catch (error) {
-        console.error("Error resetting password:", error);
+        console.error("Erreur lors de la réinitialisation du mot de passe :", error);
         if (error.name === "TokenExpiredError") {
-            return res.status(400).json({ message: "Token expired" });
+            return res.status(400).json({ message: "Le lien de réinitialisation a expiré" });
         }
-        res.status(500).json({ message: "Internal server error"});
+        res.status(500).json({ message: "Erreur interne du serveur" });
     }
 }
