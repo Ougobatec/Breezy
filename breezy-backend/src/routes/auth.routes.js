@@ -1,5 +1,4 @@
 const express = require('express');
-const User = require("../models/user.model");
 
 const authController = require("../controllers/auth.controller");
 const authMiddleware = require('../middlewares/auth.middleware');

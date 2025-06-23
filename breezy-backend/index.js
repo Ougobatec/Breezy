@@ -16,6 +16,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/auth', require('./src/routes/auth.routes'));
+app.use('/posts', require('./src/routes/post.routes'));
 
 // Connect to MongoDB
 mongoose
@@ -29,3 +30,4 @@ mongoose
     .catch((err) => {
         console.error('MongoDB connection error:', err);
     });
+
