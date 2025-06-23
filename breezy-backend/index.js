@@ -17,6 +17,7 @@ app.get('/', (req, res) => {
 
 app.use('/auth', require('./src/routes/auth.routes'));
 app.use('/posts', require('./src/routes/post.routes'));
+app.use('/user', require('./src/routes/user.routes'));
 
 // Connect to MongoDB
 mongoose

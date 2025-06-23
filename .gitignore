@@ -186,3 +186,6 @@ thumb
 sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/node,react,nextjs
+.env.template
+breezy-backend/.env.template
+breezy-frontend/.env.template

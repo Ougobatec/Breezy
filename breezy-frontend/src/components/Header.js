@@ -42,6 +42,16 @@ export default function Header({ title = "Breezy", showButtons = true }) {
                             />
                         </button>
                     </Link>
+                    <Link href="/profile">
+                        <button className="p-2" aria-label="Profil utilisateur">
+                            <Image
+                                src={pathname.startsWith("/profile") ? "/user-active.svg" : "/user.svg"}
+                                alt="Profil utilisateur"
+                                width={24}
+                                height={24}
+                            />
+                        </button>
+                    </Link>
                 </div>
             )}
         </header>
