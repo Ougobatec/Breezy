@@ -8,5 +8,5 @@ const router = express.Router();
 
 // Route pour créer un post
 router.post("/", authMiddleware, requireFields(['title', 'content']), postController.createPost);
-
+router.get("/", authMiddleware, postController.getAllPosts);
 module.exports = router;

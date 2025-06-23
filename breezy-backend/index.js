@@ -11,13 +11,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 app.get('/', (req, res) => {
     res.send('Welcome to Breezy Backend!');
 });
 
 app.use('/auth', require('./src/routes/auth.routes'));
 app.use('/posts', require('./src/routes/post.routes'));
-
+app.get('/posts', require('./src/routes/post.routes'));
 // Connect to MongoDB
 mongoose
     .connect(process.env.MONGODB_URI)

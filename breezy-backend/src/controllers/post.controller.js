@@ -20,3 +20,18 @@ exports.createPost = async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
     }
 };
+
+// Récupérer tous les posts
+exports.getAllPosts = async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ createdAt: -1 }).populate('user_id', 'username');
+        
+        if (!posts || posts.length === 0) {
+            return res.status(404).json({ message: "Aucun post trouvé." });
+        }
+
+        res.status(200).json(posts);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la récupération des posts", error: error.message });
+    }
+}
