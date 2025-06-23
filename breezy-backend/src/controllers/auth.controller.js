@@ -68,6 +68,19 @@ exports.login = async (req, res) => {
     }
 }
 
+exports.authenticate = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select("-password");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({ message: "User authenticated successfully", user });
+    } catch (error) {
+        console.error("Error authenticating user:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 exports.passwordForget = async (req, res) => {
     const { username } = req.body;
     try {
@@ -135,6 +148,6 @@ exports.passwordReset = async (req, res) => {
         if (error.name === "TokenExpiredError") {
             return res.status(400).json({ message: "Token expired" });
         }
-        res.status(500).json({ message: "Internal server error" , token});
+        res.status(500).json({ message: "Internal server error"});
     }
 }
