@@ -37,7 +37,7 @@ export default function LoginPage() {
                 setError(data.message || "Identifiants invalides.");
             } else {
                 login(data.token, data.user);
-                router.replace("/");
+                router.replace("/home");
             }
         } catch (e) {
             setError("Une erreur est survenue lors de la connexion.");
