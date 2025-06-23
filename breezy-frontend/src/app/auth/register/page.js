@@ -43,9 +43,7 @@ export default function RegisterPage() {
             );
             const data = await res.json();
             if (!res.ok) {
-                if (data.message && data.message.toLowerCase().includes("username")) {
-                    setError("Nom d'utilisateur déjà existant.");
-                }
+                setError(data.message || "Erreur lors de l'inscription.");
             } else {
                 login(data.token, data.user);
                 router.replace("/auth/login");
