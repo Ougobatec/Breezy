@@ -36,11 +36,23 @@ export default function HomePage() {
   if (!user) return null;
 
   return (
-    <>
-      <Header title="Breezy" showButtons={true} />
-      <div>Bienvenue {user.username}</div>
-      <button onClick={logout}>Déconnexion</button>
-      {postsLoading ? <LoadingScreen /> : <Posts posts={posts} />}
-    </>
-  );
+  <>
+    <Header title="Breezy" showButtons={true} />
+    <div className="items-left justify-center pl-6">
+      <span className="text-xl font-bold">Bienvenue {user.username}</span>
+    </div>
+    
+    <button onClick={logout}>Déconnexion</button>
+    {/* Trie les posts par date croissante avant de les afficher */}
+    {postsLoading ? (
+      <LoadingScreen />
+    ) : (
+    <Posts
+        posts={[...posts].sort(
+            (a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
+        )}
+    />
+    )}
+  </>
+);
 }
