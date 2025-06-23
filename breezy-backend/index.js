@@ -1,33 +1,28 @@
+// backend/index.js (ou app.js)
 require('dotenv').config();
 const mongoose = require('mongoose');
-const express = require('express');
-const cors = require('cors');
+const express  = require('express');
+const cors     = require('cors');
 
+const app  = express();
 const PORT = process.env.PORT || 3000;
-
-const app = express();
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/breezy';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-    res.send('Welcome to Breezy Backend!');
-});
+app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
 
-app.use('/auth', require('./src/routes/auth.routes'));
-app.use('/posts', require('./src/routes/post.routes'));
+app.use('/api/auth',  require('./src/routes/auth.routes'));
+app.use('/api/posts', require('./src/routes/post.routes'));
 
-// Connect to MongoDB
-mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('Connected to MongoDB');
-        app.listen(PORT, () => {
-            console.log(`Backend is running on http://localhost:${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error('MongoDB connection error:', err);
-    });
-
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('✅ Connected to MongoDB');
+  app.listen(PORT, () => console.log(`🚀 Backend running on http://localhost:${PORT}`));
+})
+.catch(err => console.error('❌ MongoDB connection error:', err));

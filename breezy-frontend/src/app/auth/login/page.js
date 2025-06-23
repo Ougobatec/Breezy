@@ -6,6 +6,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
+let urlback = "http://localhost:5000/api";
+
+
+if (process.env.NODE_ENV === 'production') {
+    urlback = "/api";
+
+}
+
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -22,7 +30,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/login`,
+                `${urlback}/auth/login`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
