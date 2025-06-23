@@ -1,6 +1,28 @@
 const User = require("../models/user.model");
+const multer = require("multer");
+const path = require("path");
 
-// Met à jour la biographie de l'utilisateur connecté
+// Multer config pour l'upload d'avatar
+const upload = multer({
+    dest: path.join(__dirname, "../../uploads/avatars"),
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
+});
+
+// GET /user/profile : renvoie la biographie et l'avatar de l'utilisateur connecté
+exports.getBio = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+        res.json({ biography: user.biography, avatar: user.avatar });
+    } catch (err) {
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
+
+// PUT /user/profile : met à jour la biographie
 exports.updateBio = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -22,16 +44,23 @@ exports.updateBio = async (req, res) => {
     }
 };
 
-// Récupère la biographie de l'utilisateur connecté
-exports.getBio = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "Utilisateur non trouvé" });
+// PUT /user/profile/avatar : upload et met à jour l'avatar
+exports.uploadAvatar = [
+    upload.single("avatar"),
+    async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            if (!req.file) return res.status(400).json({ message: "Aucun fichier envoyé" });
+            const avatarPath = `/uploads/avatars/${req.file.filename}`;
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { avatar: avatarPath },
+                { new: true }
+            );
+            if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+            res.json({ message: "Avatar mis à jour", user });
+        } catch (err) {
+            res.status(500).json({ message: "Erreur serveur" });
         }
-        res.json({ biography: user.biography });
-    } catch (err) {
-        res.status(500).json({ message: "Erreur serveur" });
     }
-};
+];

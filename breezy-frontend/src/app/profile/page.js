@@ -49,7 +49,25 @@ export default function ProfilePage() {
         <main className="min-h-screen bg-gray-50">
             <Header title="Mon profil" showButtons={false} />
             <section className="flex flex-col items-center justify-center">
-                <UserProfile user={{ ...user, bio: biography }} onBioUpdate={handleBioUpdate} />
+                <UserProfile
+                    user={{ ...user, bio: biography, avatar: user?.avatar }}
+                    onBioUpdate={handleBioUpdate}
+                    onAvatarUpdate={async (formData) => {
+                        // Envoi du fichier avatar au backend
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/user/profile/avatar`, {
+                            method: "PUT",
+                            headers: { Authorization: `Bearer ${token}` },
+                            body: formData,
+                        });
+                        if (!res.ok) throw new Error("Erreur lors de la mise à jour de l'avatar");
+                        const data = await res.json();
+                        // Met à jour le contexte utilisateur si besoin
+                        if (user && login) {
+                            login(token, { ...user, avatar: data.user.avatar });
+                        }
+                    }}
+                />
+                <a href="/home" className="mt-6 px-6 py-2 bg-gray-200 text-black rounded hover:bg-gray-300 transition">Retour à l'accueil</a>
             </section>
         </main>
     );
