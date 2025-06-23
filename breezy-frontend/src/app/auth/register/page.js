@@ -6,16 +6,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
-
-
-let urlback = "http://localhost:5000/api";
-
-
-if (process.env.NODE_ENV === 'production') {
-    urlback = "/api";
-
-}
-
 export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -39,7 +29,7 @@ export default function RegisterPage() {
         setLoading(true);
         try {
             const res = await fetch(
-                `${urlback}/auth/register`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
