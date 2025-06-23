@@ -14,34 +14,42 @@ exports.register = async (req, res) => {
         const user = new User({ name, username, email, password: hashedPassword });
         await user.save();
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT,
-            secure: false,
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-        });
+        const smtpReady = process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS;
+        if (smtpReady) {
+            try {
+                const transporter = nodemailer.createTransport({
+                    host: process.env.SMTP_HOST,
+                    port: process.env.SMTP_PORT,
+                    secure: false,
+                    auth: {
+                        user: process.env.SMTP_USER,
+                        pass: process.env.SMTP_PASS,
+                    },
+                });
 
-        const mailOptions = {
-            from: `"Breezy" <${process.env.SMTP_USER}>`,
-            to: email,
-            subject: "Bienvenue sur Breezy 🎉",
-            text: `Bonjour ${name},\n\nMerci de vous être inscrit sur Breezy ! Nous sommes ravis de vous accueillir.\n\nÀ bientôt sur Breezy !\nL'équipe Breezy`,
-            html: `
-                <div style="font-family: Arial, sans-serif; background: #f9fafb; padding: 32px;">
-                    <div style="max-width: 480px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; padding: 32px;">
-                        <h2 style="color: #e11d48; margin-bottom: 16px;">Bienvenue sur <span style="color:#0ea5e9;">Breezy</span> 🎉</h2>
-                        <p style="font-size: 16px; color: #222;">Bonjour <b>${name}</b>,</p>
-                        <p style="font-size: 16px; color: #222;">Merci de vous être inscrit sur <b>Breezy</b> ! Nous sommes ravis de vous accueillir.</p>
-                        <p style="font-size: 15px; color: #666; margin-top: 32px;">À bientôt sur Breezy !<br>L’équipe Breezy</p>
-                    </div>
-                </div>
-            `,
-        };
+                const mailOptions = {
+                    from: `"Breezy" <${process.env.SMTP_USER}>`,
+                    to: email,
+                    subject: "Bienvenue sur Breezy 🎉",
+                    text: `Bonjour ${name},\n\nMerci de vous être inscrit sur Breezy ! Nous sommes ravis de vous accueillir.\n\nÀ bientôt sur Breezy !\nL'équipe Breezy`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; background: #f9fafb; padding: 32px;">
+                            <div style="max-width: 480px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; padding: 32px;">
+                                <h2 style="color: #e11d48; margin-bottom: 16px;">Bienvenue sur <span style="color:#0ea5e9;">Breezy</span> 🎉</h2>
+                                <p style="font-size: 16px; color: #222;">Bonjour <b>${name}</b>,</p>
+                                <p style="font-size: 16px; color: #222;">Merci de vous être inscrit sur <b>Breezy</b> ! Nous sommes ravis de vous accueillir.</p>
+                                <p style="font-size: 15px; color: #666; margin-top: 32px;">À bientôt sur Breezy !<br>L’équipe Breezy</p>
+                            </div>
+                        </div>
+                    `,
+                };
 
-        await transporter.sendMail(mailOptions);
+                await transporter.sendMail(mailOptions);
+            } catch (mailError) {
+                console.error("Erreur lors de l'envoi du mail d'inscription :", mailError);
+            }
+        }
+        
         res.status(201).json({ message: "User registered successfully" });
     } catch (error) {
         console.error("Error registering user:", error);
