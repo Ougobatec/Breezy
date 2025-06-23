@@ -28,11 +28,24 @@ services:
       dockerfile: Dockerfile
     container_name: breezy-frontend
     environment:
-      - NODE_ENV = production
+      - NODE_ENV=production
     ports:
       - "3000:3000"
     depends_on:
       - backend
+    networks:
+      - breezy-net
+
+
+  nginx:
+    image: nginx:latest
+    container_name: balancer
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+
+    restart: always
     networks:
       - breezy-net
 
