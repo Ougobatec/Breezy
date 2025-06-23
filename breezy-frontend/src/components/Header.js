@@ -7,7 +7,7 @@ export default function Header({ title = "Breezy", showButtons = true }) {
     const pathname = usePathname();
 
     return (
-        <header className="w-full flex items-center justify-between px-6 py-4">
+        <header className="w-full flex items-center justify-between px-6 py-4 sticky top-0 left-0 z-50 bg-white shadow">
             <div className="flex items-center gap-2">
                 <Image src="/logo.svg" alt="Logo Breezy" width={32} height={32} />
                 <span className="text-xl font-bold">{title}</span>
