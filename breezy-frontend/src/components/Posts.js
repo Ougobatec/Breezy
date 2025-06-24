@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function Posts({ posts }) {
   const { token, user } = useAuth();
   const [postsState, setPostsState] = useState(posts);
+  const [popStates, setPopStates] = useState({}); // postId: bool
 
   const handleLike = async (postId) => {
     const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/posts/${postId}/like`;
@@ -33,6 +34,11 @@ export default function Posts({ posts }) {
             (p._id || p.id) === postId ? { ...p, likes: data.post.likes } : p
           )
         );
+        // Déclenche l'animation pop
+        setPopStates((prev) => ({ ...prev, [postId]: true }));
+        setTimeout(() => {
+          setPopStates((prev) => ({ ...prev, [postId]: false }));
+        }, 300);
       }
     } catch (e) {
       console.error("Erreur lors de la requête PUT like :", e);
@@ -149,7 +155,8 @@ export default function Posts({ posts }) {
                   alt="Like"
                   width={20}
                   height={20}
-                  className="w-5 h-5"
+                  
+                  className={`w-5 h-5${popStates[postId] ? " pop-animation" : ""}`}
                 />
               </button>
               <Link href={`/posts/${postId}/comments`}>
