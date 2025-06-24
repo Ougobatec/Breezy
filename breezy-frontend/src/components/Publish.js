@@ -105,7 +105,15 @@ export default function Publish() {
           className="w-full h-40 bg-gray-100 flex items-center justify-center rounded-md cursor-pointer mb-2"
         >
           {imagePreview ? (
-            <img src={imagePreview} alt="preview" className="object-cover w-full h-full rounded-md" />
+            <Image
+              src={imagePreview}
+              alt="preview"
+              width={400}
+              height={160}
+              className="object-cover w-full h-full rounded-md"
+              style={{ width: "100%", height: "100%" }}
+              unoptimized
+            />
           ) : (
             <span className="text-gray-400">Ajouter une image</span>
           )}

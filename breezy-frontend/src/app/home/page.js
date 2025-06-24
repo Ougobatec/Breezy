@@ -17,7 +17,7 @@ export default function HomePage() {
       setPostsLoading(true);
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/posts`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
