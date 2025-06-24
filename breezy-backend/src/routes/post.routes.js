@@ -16,4 +16,5 @@ router.get("/", authMiddleware, postController.getAllPosts);
 router.put("/:id/like", authMiddleware, postController.likePost);
 router.get("/:id/like", authMiddleware, postController.getPostLikes);
 
+
 module.exports = router;

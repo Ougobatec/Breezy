@@ -20,6 +20,7 @@ app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./sr
 app.use('/auth',  require('./src/routes/auth.routes'));
 app.use('/posts', require('./src/routes/post.routes'));
 app.use('/users', require('./src/routes/user.routes'));
+app.use('/comments', require('./src/routes/comment.routes'));
 
 app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
 
