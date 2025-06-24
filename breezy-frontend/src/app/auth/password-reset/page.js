@@ -28,7 +28,7 @@ function PasswordChangePageContent() {
         try {
             const token = searchParams.get("token");
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/password-reset`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/password-reset`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
