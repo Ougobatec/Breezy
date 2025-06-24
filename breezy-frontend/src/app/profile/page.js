@@ -27,6 +27,22 @@ export default function ProfilePage() {
         fetchBio();
     }, [token]);
 
+    // Rafraîchir l'utilisateur à chaque affichage de la page profil
+    useEffect(() => {
+        const fetchUser = async () => {
+            if (!token || !login) return;
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/authenticate`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                login(token, data.user);
+            }
+        };
+        fetchUser();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Fonction pour mettre à jour la biography côté backend
     const handleBioUpdate = async (newBio) => {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/user/profile`, {
