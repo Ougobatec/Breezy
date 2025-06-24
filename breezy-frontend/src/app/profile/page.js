@@ -14,7 +14,7 @@ export default function ProfilePage() {
         const fetchBio = async () => {
             if (!token) return;
             setLoading(true);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/user/profile`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/users/profile`, {
                 method: "GET",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -45,7 +45,7 @@ export default function ProfilePage() {
 
     // Fonction pour mettre à jour la biography côté backend
     const handleBioUpdate = async (newBio) => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/user/profile`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/users/profile`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -70,7 +70,7 @@ export default function ProfilePage() {
                     onBioUpdate={handleBioUpdate}
                     onAvatarUpdate={async (formData) => {
                         // Envoi du fichier avatar au backend
-                        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/user/profile/avatar`, {
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/users/profile/avatar`, {
                             method: "PUT",
                             headers: { Authorization: `Bearer ${token}` },
                             body: formData,
