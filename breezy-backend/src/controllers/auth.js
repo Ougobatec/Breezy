@@ -12,7 +12,7 @@ const authController = {
     register: async (req, res) => {
         const { name, username, email, password } = req.body;
         try {
-            const existingUser = await User.findOne({ username });
+            const existingUser = await userModel.findOne({ username });
             if (existingUser) {
                 return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris" });
             }

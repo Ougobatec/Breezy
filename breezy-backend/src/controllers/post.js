@@ -2,6 +2,8 @@
 import postModel from "#models/post.js";
 
 
+
+
 const postController = {
     
 
@@ -11,7 +13,7 @@ const postController = {
         try {
             const { content } = req.body;
             const userId = req.user.userId;
-            const post = new Post({ content, user_id: userId });
+            const post = new postModel({ content, user_id: userId });
             await post.save();
             res.status(201).json({ message: "Post créé avec succès", post });
         } catch (error) {
@@ -23,7 +25,7 @@ const postController = {
     // Récupérer tous les posts
     getAllPosts: async (req, res) => {
         try {
-            const posts = await Post.find().sort({ createdAt: -1 }).populate('user_id', 'username name avatar');
+            const posts = await postModel.find().sort({ createdAt: -1 }).populate('user_id', 'username name avatar');
         
             if (!posts || posts.length === 0) {
                 return res.status(404).json({ message: "Aucun post trouvé." });
