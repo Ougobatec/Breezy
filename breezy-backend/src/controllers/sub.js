@@ -5,10 +5,10 @@ const subController = {
     
     subscriptionAdd: async (req, res) => {
 
-        const { folower, subscriber } = req.body; // Ajout de image
-
+        const { follower, subscriber } = req.body; // Ajout de image
+        console.log(subscriber,"sabonne a", follower);
         try {
-            const subscription = new SubscriptionModel({ folower, subscriber }); // Ajout de image
+            const subscription = new SubscriptionModel({ subscription_id:follower, subscriber_id:subscriber }); // Ajout de image
             await subscription.save();
             res.status(201).json(subscription);
         } catch (err) {
@@ -19,7 +19,7 @@ const subController = {
     followerGet: async (req, res) => {
         console.log("Creating a new post");
         const { follower } = req.body; // Ajout de image
-        const lefollower = await SubscriptionModel.findOne({ follower });
+        const lefollower = await SubscriptionModel.findOne({ subscription_id: follower });
         if (!lefollower) {
             return res.status(404).json({ message: "Abonnement non trouvé" });
         }
@@ -29,7 +29,7 @@ const subController = {
     subscriptionsGet: async (req, res) => {
         console.log("Creating a new post");
         const { subscription } = req.body; // Ajout de image
-        const abonement = await SubscriptionModel.findOne({ subscription });
+        const abonement = await SubscriptionModel.findOne({ subscription : subscription });
         if (!abonement) {
             return res.status(404).json({ message: "Abonnement non trouvé" });
         }
@@ -40,7 +40,7 @@ const subController = {
     subscriptionsRemove: async (req, res) => {
         console.log("Creating a new post");
         const { subscription } = req.body; // Ajout de image
-        const abonement = await SubscriptionModel.findOne({ subscription });
+        const abonement = await SubscriptionModel.findOne({ subscription_id : subscription });
         if (!abonement) {
             return res.status(404).json({ message: "Abonnement non trouvé" });
         }
