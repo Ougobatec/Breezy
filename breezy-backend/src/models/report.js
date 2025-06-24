@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const reportSchema = new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -8,5 +8,7 @@ const reportSchema = new mongoose.Schema({
     created_at: { type: Date, default: Date.now }
 })
 
-const Report = mongoose.model('Report', reportSchema);
-module.exports = Report;
+const ReportModel = mongoose.model('Report', reportSchema);
+
+
+export default ReportModel;
