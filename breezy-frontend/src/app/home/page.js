@@ -13,15 +13,17 @@ export default function HomePage() {
 
   useEffect(() => {
     if (loading || !user || !token) return;
-    async function fetchPosts() {
+    const fetchPosts = async () => {
       setPostsLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/posts", {
-          headers: {
-            
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/posts`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         if (!res.ok) throw new Error("Erreur lors du chargement des posts");
         const data = await res.json();
         setPosts(data.posts || data || []);
@@ -29,34 +31,31 @@ export default function HomePage() {
         setPosts([]);
       }
       setPostsLoading(false);
-    }
+    };
     fetchPosts();
   }, [loading, user, token]);
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen text="Connexion en cours..." />;
   if (!user) return null;
+  if (postsLoading) return <LoadingScreen text="Chargement des posts" />;
 
   return (
-  <>
-    <Header title="Breezy" showButtons={true} />
-    <div className="items-left justify-center pl-6 pt-4">
-      <span className="text-xl font-bold">Bienvenue {user.username}</span>
-    </div>
-    
-    <button onClick={logout}>Déconnexion</button>
-    {/* Trie les posts par date croissante avant de les afficher */}
-    {postsLoading ? (
-      <LoadingScreen />
-    ) : (
-    <Posts
+    <>
+      <Header title="Breezy" showButtons={true} />
+      <div className="items-left justify-center px-4 py-2">
+        <span className="text-xl font-bold">
+          Bienvenue {user.name || user.username || ""}
+        </span>
+      </div>
+      <button onClick={logout}>Déconnexion</button>
+      <Posts
         posts={[...posts].sort(
-            (a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
+          (a, b) =>
+            new Date(b.created_at || b.createdAt) -
+            new Date(a.created_at || a.createdAt)
         )}
-    />
-    
-    )}
-    <BottomNav />
-  </>
-  
-);
+      />
+      <BottomNav />
+    </>
+  );
 }
