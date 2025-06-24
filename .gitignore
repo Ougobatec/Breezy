@@ -191,3 +191,4 @@ sketch
 .env.template
 breezy-backend/.env.template
 breezy-frontend/.env.template
+/breezy-backend/uploads/avatars
