@@ -75,10 +75,11 @@ return (
                         unoptimized
                     />
                 )}
+
                 <div className="flex flex-col gap-2 px-4 py-2 text-sm">
-                    {/* Contenu textuel du post */}
-                    {post.content || "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}
-                    {/* Tags du post */}
+                    <p className="px-4 py-2 text-gray-800 text-sm break-words whitespace-pre-line">
+                    {post.content}
+                    </p>
                     {(post.tags && post.tags.length > 0) && (
                         <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
                             {post.tags.map((tag, i) => (
@@ -87,7 +88,7 @@ return (
                                 </span>
                             ))}
                         </div>
-                    )}
+                    )}           
                 </div>
                 {/* Barre d'actions : like, commentaire, partage */}
                 <div className="flex items-center px-2 pb-2">
