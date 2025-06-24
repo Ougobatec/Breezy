@@ -15,10 +15,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads/avatars')));
 
 app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
+app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
 
 app.use('/auth',  require('./src/routes/auth.routes'));
 app.use('/posts', require('./src/routes/post.routes'));
 app.use('/users', require('./src/routes/user.routes'));
+
+app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
 
 mongoose.connect(MONGO_URI)
 .then(() => {

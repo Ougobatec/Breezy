@@ -12,4 +12,8 @@ const router = express.Router();
 router.post("/", authMiddleware, upload.single("image"), postController.createPost);
 router.get("/", authMiddleware, postController.getAllPosts);
 
+// Route pour liker un post
+router.put("/:id/like", authMiddleware, postController.likePost);
+router.get("/:id/like", authMiddleware, postController.getPostLikes);
+
 module.exports = router;
