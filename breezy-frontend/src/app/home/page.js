@@ -55,6 +55,7 @@ export default function HomePage() {
             new Date(a.created_at || a.createdAt)
         )}
       />
+      
       <BottomNav />
     </>
   );
