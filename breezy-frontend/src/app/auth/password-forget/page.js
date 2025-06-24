@@ -19,7 +19,7 @@ export default function PasswordForgetPage() {
         setLoading(true);
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/password-forget`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/password-forget`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

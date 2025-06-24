@@ -22,7 +22,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
