@@ -83,7 +83,7 @@ export default function ProfilePage() {
                         }
                     }}
                 />
-                <a href="/home" className="mt-6 px-6 py-2 bg-gray-200 text-black rounded hover:bg-gray-300 transition">Retour à l'accueil</a>
+                <a href="/home" className="mt-6 px-6 py-2 bg-gray-200 text-black rounded hover:bg-gray-300 transition">Retour à l&#39;accueil</a>
             </section>
         </main>
     );
