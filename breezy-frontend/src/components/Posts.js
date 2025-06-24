@@ -67,10 +67,9 @@ return (
                     />
                 )}
                 {/* Contenu textuel du post */}
-                <div className="px-4 py-2 text-gray-800 text-sm">
-                    {post.content ||
-                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}
-                </div>
+                <p className="px-4 py-2 text-gray-800 text-sm break-words whitespace-pre-line">
+                    {post.content}
+                </p>
                 {/* Tags du post */}
                 <div className="px-4 pb-2 text-xs text-gray-400">
                     {(post.tags || ["tag", "tag", "tag", "tag"]).map((tag, i) => (
