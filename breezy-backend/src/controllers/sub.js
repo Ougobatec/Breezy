@@ -6,8 +6,9 @@ const subController = {
     // Ajouter un abonnement (je m'abonne à quelqu'un)
     subscriptionAdd: async (req, res) => {
         console.log("Requête d'abonnement reçue :", req.body);
-        const { targetId } = req.body; // id de la personne que je veux suivre
-
+        // Accepte targetId OU subscription_id
+        const targetId = req.body.targetId || req.body.subscription_id;
+    
         const myUserId = req.user.userId || req.user.id; // pour compatibilité
         console.log(myUserId, "veut s'abonner à", targetId);
         try {
