@@ -3,7 +3,6 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import LoadingScreen from "@/components/LoadingScreen";
 import React, { useEffect, useState } from "react";
-
 import SkeletonAvatar from "@/components/SkeletonAvatar";
 import Layout from "@/components/Layout";
 

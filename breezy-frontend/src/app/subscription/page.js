@@ -44,19 +44,21 @@ export default function SubscriptionPage() {
   const handleSubscribe = async () => {
     if (!targetId) return;
     try {
-      console.log("Tentative d'abonnement à l'ID :", targetId);
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/subscribe`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ targetId }),
-        }
-      );
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/subscribe`;
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          subscription_id: targetId,
+        }),
+      };
+
+      const res = await fetch(url, options);
       if (!res.ok) throw new Error("Erreur lors de l'abonnement");
+
       setSubscribeMsg("Abonnement réussi");
       setTargetId("");
       // Optionally, refetch subscriptions or update state
