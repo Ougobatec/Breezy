@@ -13,5 +13,8 @@ const PostRouter = express.Router();
 PostRouter.post("/", authMiddleware, upload.single("image"), postController.createPost);
 PostRouter.get("/", authMiddleware, postController.getAllPosts);
 
+// Route pour liker un post
+PostRouter.put("/:id/like", authMiddleware, postController.likePost);
+PostRouter.get("/:id/like", authMiddleware, postController.getPostLikes);
 
 export default PostRouter;
