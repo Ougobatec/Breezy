@@ -63,6 +63,7 @@ export default function RegisterPage() {
     const handleGoogleRegister = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             try {
+                setLoading(true);
                 // Récupère les infos du profil Google
                 const res = await axios.get(
                     `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenResponse.access_token}`,
@@ -74,10 +75,8 @@ export default function RegisterPage() {
                     }
                 );
                 const profile = res.data;
-                // Génère un username à partir de l'email si besoin
-                const username = profile.email.split("@")[0];
 
-                // Appelle ton backend pour créer ou connecter l'utilisateur
+                // Appelle ton backend
                 const backendRes = await fetch(
                     `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`,
                     {
@@ -85,22 +84,25 @@ export default function RegisterPage() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             name: profile.name,
-                            username,
                             email: profile.email,
-                            avatar: profile.picture, // si tu veux stocker l'avatar
-                            googleId: profile.id,    // optionnel, pour lier le compte
+                            avatar: profile.picture,
+                            googleId: profile.id,
                         }),
+                        credentials: "include", // Important pour les cookies
                     }
                 );
                 const data = await backendRes.json();
                 if (!backendRes.ok) {
                     setError(data.message || "Erreur lors de l'inscription Google.");
                 } else {
-                    login(data.token, data.user);
-                    router.replace("/");
+                    login(null, data.user); // Pas de token car il est dans le cookie
+                    router.replace("/home");
                 }
             } catch (e) {
+                console.error("Erreur Google register:", e);
                 setError("Erreur lors de l'inscription avec Google.");
+            } finally {
+                setLoading(false);
             }
         },
         onError: () => setError("Connexion Google échouée."),

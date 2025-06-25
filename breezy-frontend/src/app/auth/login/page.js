@@ -52,7 +52,6 @@ export default function LoginPage() {
         setError("");
         setLoading(true);
         try {
-            // Envoie le credential (id_token) au backend
             const backendRes = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`,
                 {
@@ -61,16 +60,18 @@ export default function LoginPage() {
                     body: JSON.stringify({
                         id_token: response.credential,
                     }),
+                    credentials: "include", // Ajoutez cette ligne
                 }
             );
             const data = await backendRes.json();
             if (!backendRes.ok) {
                 setError(data.message || "Erreur lors de la connexion Google.");
             } else {
-                login(data.token, data.user);
+                login(null, data.user); // Pas de token car il est dans le cookie
                 router.replace("/home");
             }
         } catch (e) {
+            console.error("Erreur Google login:", e);
             setError("Erreur lors de la connexion avec Google.");
         } finally {
             setLoading(false);
