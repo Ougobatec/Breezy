@@ -27,9 +27,10 @@ const subController = {
     followerGet: async (req, res) => {
         const myUserId = req.user.userId || req.user.id; // pour compatibilité
         console.log(myUserId, "veut voir ses abonnés");
-
+       
         try {
             const followers = await SubscriptionModel.find({ subscription_id: myUserId }).populate("subscriber_id", "name username avatar");
+            
             res.status(200).json(followers.map(sub => sub.subscriber_id));
         } catch (err) {
             res.status(500).json({ error: err.message });
@@ -38,11 +39,18 @@ const subController = {
 
     // Récupérer mes abonnements (ceux que JE suis)
     subscriptionsGet: async (req, res) => {
-        const myUserId = req.user.userId || req.user.id; // pour compatibilité
-        console.log(myUserId, "veut voir ses abonnements");
+        const myUserId = req.user.userId || req.user.id;
+        
         try {
-            const subscriptions = await SubscriptionModel.find({ subscriber_id: myUserId }).populate("subscription_id", "name username avatar");
-            res.status(200).json(subscriptions.map(sub => sub.subscription_id));
+            const subscriptions = await SubscriptionModel.find({ subscriber_id: myUserId })
+                .populate("subscription_id", "name username avatar");
+            console.log(myUserId, "veut voir ses abonnements");
+            console.log("Abonnements trouvés :", subscriptions);
+            // On ne garde que les users existants
+            const users = subscriptions
+                .map(sub => sub.subscription_id)
+                .filter(user => user !== null);
+            res.status(200).json(users);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
