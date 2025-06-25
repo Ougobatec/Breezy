@@ -8,12 +8,12 @@ import SkeletonAvatar from "@/components/SkeletonAvatar";
 import Layout from "@/components/Layout";
 
 export default function HomePage() {
-  const { user, token, loading, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [followers, setFollowers] = useState([]);
   const [followersLoading, setFollowersLoading] = useState(true);
 
   useEffect(() => {
-    if (loading || !user || !token) return;
+    if (loading || !user) return;
     const fetchFollowers = async () => {
       setFollowersLoading(true);
       try {
@@ -23,8 +23,8 @@ export default function HomePage() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
             },
+            credentials: "include",
           }
         );
         if (!res.ok) throw new Error("Erreur lors du chargement des abonnés");
@@ -36,7 +36,7 @@ export default function HomePage() {
       setFollowersLoading(false);
     };
     fetchFollowers();
-  }, [loading, user, token]);
+  }, [loading, user]);
 
   const handleRemoveFollower = async (followerUserId) => {
     try {
@@ -46,8 +46,8 @@ export default function HomePage() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
           body: JSON.stringify({ followerUserId }),
         }
       );
