@@ -223,10 +223,10 @@ export default function ProfilePage() {
                 Posts
             </div>
             <div className="space-y-4 px-4 pb-4">
-                {posts.length === 0 ? (
+                {(Array.isArray(posts) ? posts : []).length === 0 ? (
                     <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Aucun post à afficher.</div>
                 ) : (
-                    posts
+                    (Array.isArray(posts) ? posts : [])
                         .sort(
                             (a, b) =>
                                 new Date(b.created_at || b.createdAt) -
@@ -240,7 +240,7 @@ export default function ProfilePage() {
                                 currentUser={user}
                                 onLikeUpdate={(likes) =>
                                     setPosts((prev) =>
-                                        prev.map((p) =>
+                                        (Array.isArray(prev) ? prev : []).map((p) =>
                                             (p._id || p.id) === (post._id || post.id)
                                                 ? { ...p, likes }
                                                 : p
