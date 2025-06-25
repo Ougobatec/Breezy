@@ -16,4 +16,7 @@ router.get("/", authMiddleware, postController.getAllPosts);
 router.put("/:id/like", authMiddleware, postController.likePost);
 router.get("/:id/like", authMiddleware, postController.getPostLikes);
 
+// Route pour supprimer un post
+router.delete("/:id", authMiddleware, postController.deletePost);
+
 module.exports = router;

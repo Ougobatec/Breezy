@@ -66,3 +66,23 @@ exports.getPostLikes = async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la récupération des likes du post", error: error.message });
     }
 }
+
+// Supprimer un post
+exports.deletePost = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.user.userId;
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ message: "Post non trouvé." });
+        }
+        // Vérifie que l'utilisateur est bien le propriétaire du post
+        if (post.user_id.toString() !== userId) {
+            return res.status(403).json({ message: "Non autorisé à supprimer ce post." });
+        }
+        await Post.findByIdAndDelete(postId);
+        res.status(200).json({ message: "Post supprimé avec succès." });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la suppression du post", error: error.message });
+    }
+};

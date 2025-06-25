@@ -13,6 +13,7 @@ export default function ProfilePage() {
     const [postsLoading, setPostsLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
     const [bioDraft, setBioDraft] = useState("");
+    const [openMenuPostId, setOpenMenuPostId] = useState(null);
 
     // Charger la biography depuis le backend au chargement
     useEffect(() => {
@@ -88,6 +89,34 @@ export default function ProfilePage() {
             login(token, { ...user, biography: newBio });
         }
     };
+
+    // Fonction pour supprimer un post
+    const handleDeletePost = async (postId) => {
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/posts/${postId}`;
+        console.log('Suppression du post avec ID:', postId, 'URL:', url); // DEBUG
+        if (!window.confirm("Voulez-vous vraiment supprimer ce post ?")) return;
+        const res = await fetch(url, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+            setPosts((prev) => prev.filter((p) => p._id !== postId));
+        } else {
+            alert("Erreur lors de la suppression du post.");
+        }
+        setOpenMenuPostId(null);
+    };
+
+    // Fermer le menu si on clique ailleurs
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (!e.target.closest('.post-menu')) setOpenMenuPostId(null);
+        };
+        if (openMenuPostId !== null) {
+            document.addEventListener('mousedown', handleClick);
+        }
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [openMenuPostId]);
 
     return (
         <main className="min-h-screen bg-gray-50 pb-20">
@@ -190,7 +219,19 @@ export default function ProfilePage() {
                                     <span className="text-gray-400 text-xs ml-1">@{user?.username || "username"}</span>
                                     <div className="text-xs text-gray-400">{post.created_at ? new Date(post.created_at).toLocaleString() : ""}</div>
                                 </div>
-                                <div className="ml-auto text-gray-400 cursor-pointer">•••</div>
+                                <div className="ml-auto text-gray-400 cursor-pointer relative post-menu">
+                                    <span onClick={() => setOpenMenuPostId(post._id)}>•••</span>
+                                    {openMenuPostId === post._id && (
+                                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow z-10">
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-800"
+                                                onClick={() => handleDeletePost(post._id)}
+                                            >
+                                                Supprimer
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             {post.media && post.media !== "" && (
                                 <img src={post.media.startsWith("http") ? post.media : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${post.media.startsWith("/") ? post.media : "/" + post.media}`}
