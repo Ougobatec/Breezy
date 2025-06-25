@@ -32,6 +32,11 @@ export default function HomePage() {
       fetchPosts();
   }, [loading, user]);
 
+  // Gestion de la suppression d'un post
+  const handleDeletePost = (postId) => {
+    setPosts((prev) => prev.filter((p) => (p._id || p.id) !== postId));
+  };
+
   if (!user) return null;
   if (loading) return <LoadingScreen text="Chargement de la page..." />;
   if (postsLoading) return <LoadingScreen text="Chargement des posts..." />;
@@ -57,6 +62,8 @@ export default function HomePage() {
                 post={post}
                 token={token}
                 currentUser={user}
+                showDeleteOption={true}
+                onDeletePost={handleDeletePost}
                 onLikeUpdate={(likes) =>
                   setPosts((prev) =>
                     prev.map((p) =>
