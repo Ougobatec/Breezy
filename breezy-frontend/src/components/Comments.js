@@ -217,7 +217,7 @@ export default function Comments({ postId, token, user, onClose }) {
         <div className="flex justify-center pb-2 w-full">
           <button
             onClick={onClose}
-            className="text-sm px-4 py-2 rounded-xl "
+            className="text-sm px-4 py-2 rounded-xl"
             style={{  
               color: "var(--text-secondary)",
               width: "100%",

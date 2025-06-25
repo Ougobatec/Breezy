@@ -140,7 +140,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
 
             {/* Drawer des commentaires : slide up depuis sous la carte */}
            <div
-                className={`fixed left-0 right-0 bottom-0 z-[100] transition-transform duration-300 ${
+                className={`fixed left-0 right-0 bottom-0 z-[100] transition-transform duration-200 ${
                     showComments ? "translate-y-0" : "translate-y-full pointer-events-none"
                 }`}
                 style={{
@@ -149,7 +149,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
                     borderTopRightRadius: "1rem",
                     boxShadow: "0 -2px 16px #0002",
                     maxHeight: "70vh",
-                    minHeight: "40vh",
+                    minHeight: "10vh",
                     overflowY: "auto",
                 }}
             >
