@@ -1,4 +1,4 @@
-module.exports = (requiredFields, location = "body") => {
+const requireFields = (requiredFields, location = "body") => {
     return (req, res, next) => {
         const data = req[location] || {};
         const missing = requiredFields.filter((field) => !(field in data));
@@ -8,3 +8,5 @@ module.exports = (requiredFields, location = "body") => {
         next();
     };
 };
+
+export default requireFields;
