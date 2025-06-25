@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import PrimaryButton from "@/components/PrimaryButton";
 
 export default function AuthForm({ fields, onSubmit, submitLabel }) {
     const [values, setValues] = useState({});
@@ -29,13 +30,9 @@ export default function AuthForm({ fields, onSubmit, submitLabel }) {
                     />
                 </div>
             ))}
-            <button
-                type="submit"
-                style={{ backgroundColor: "var(--primary)", color: "var(--text-inverted)" }}
-                className="w-full rounded-xl px-4 py-4 text-base font-semibold"
-            >
+            <PrimaryButton type="submit">
                 {submitLabel || "Valider"}
-            </button>
+            </PrimaryButton>
         </form>
     );
 }

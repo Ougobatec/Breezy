@@ -1,13 +1,12 @@
 "use client";
-import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/Header";
 import LoadingScreen from "@/components/LoadingScreen";
-import React, { useEffect, useState } from "react";
-import Posts from "@/components/Posts";
-import BottomNav from "@/components/BottomNav";
+import Layout from "@/components/Layout";
+import PostCard from "@/components/PostCard";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
-  const { user, token, loading, logout } = useAuth();
+  const { user, token, loading } = useAuth();
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
 
@@ -35,27 +34,44 @@ export default function HomePage() {
     fetchPosts();
   }, [loading, user, token]);
 
-  if (loading) return <LoadingScreen text="Connexion en cours..." />;
   if (!user) return null;
-  if (postsLoading) return <LoadingScreen text="Chargement des posts" />;
+  if (loading) return <LoadingScreen text="Chargement de la page..." />;
+  if (postsLoading) return <LoadingScreen text="Chargement des posts..." />;
 
   return (
-    <>
-      <Header title="Breezy" showButtons={true} />
-      <div className="items-left justify-center px-4 py-2">
-        <span className="text-xl font-bold">
-          Bienvenue {user.name || user.username || ""}
-        </span>
+    <Layout headerProps={{ title: "Accueil" }}>
+      <div className="text-xl font-bold p-4">
+        Bienvenue {user.name}
       </div>
-      <button onClick={logout}>Déconnexion</button>
-      <Posts
-        posts={[...posts].sort(
-          (a, b) =>
-            new Date(b.created_at || b.createdAt) -
-            new Date(a.created_at || a.createdAt)
+      <div className="space-y-4 px-4 pb-4">
+        {posts.length === 0 ? (
+          <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Aucun post à afficher.</div>
+        ) : (
+          posts
+            .sort(
+              (a, b) =>
+                new Date(b.created_at || b.createdAt) -
+                new Date(a.created_at || a.createdAt)
+            )
+            .map((post) => (
+              <PostCard
+                key={post._id || post.id}
+                post={post}
+                token={token}
+                currentUser={user}
+                onLikeUpdate={(likes) =>
+                  setPosts((prev) =>
+                    prev.map((p) =>
+                      (p._id || p.id) === (post._id || post.id)
+                        ? { ...p, likes }
+                        : p
+                    )
+                  )
+                }
+              />
+            ))
         )}
-      />
-      <BottomNav />
-    </>
+      </div>
+    </Layout>
   );
 }
