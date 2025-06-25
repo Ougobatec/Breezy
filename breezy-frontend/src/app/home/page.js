@@ -16,7 +16,7 @@ export default function HomePage() {
         setPostsLoading(true);
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/flow`,
             {
               credentials: "include",
             }

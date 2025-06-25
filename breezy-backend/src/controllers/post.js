@@ -1,4 +1,5 @@
 import PostModel from "#models/post.js";
+import SubscriptionModel from "#models/subscription.js"
 
 const postController = {
     createPost: async (req, res) => {
@@ -30,6 +31,29 @@ const postController = {
             res.status(200).json(posts);
         } catch (error) {
             res.status(500).json({ message: "Erreur lors de la récupération des posts", error: error.message });
+        }
+    },
+
+    // Récupérer les posts du flux de l'utilisateur
+    getFlowPosts: async (req, res) => {
+        const userId = req.user.userId;
+
+        try {
+            // Récupérer les abonnements de l'utilisateur (utilisateurs suivis)
+            const subscriptions = await SubscriptionModel.find({ subscriber_id: userId }).populate('subscription_id', 'username name avatar');
+            const subscribedUserIds = subscriptions.map(sub => sub.subscription_id._id);
+
+            // Ajouter l'utilisateur lui-même pour afficher ses propres posts
+            subscribedUserIds.push(userId);
+
+            // Récupérer les posts des utilisateurs abonnés
+            const posts = await PostModel.find({ user_id: { $in: subscribedUserIds } })
+                .sort({ createdAt: -1 })
+                .populate('user_id', 'username name avatar');
+
+            res.status(200).json({ posts });
+        } catch (error) {
+            res.status(500).json({ message: "Erreur lors de la récupération des posts du flux", error: error.message });
         }
     },
 
