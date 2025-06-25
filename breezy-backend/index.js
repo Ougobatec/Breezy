@@ -28,6 +28,7 @@ import routeurPost from '#routes/post.js'
 import routeurAuth from '#routes/auth.js'
 import routeurUser from '#routes/user.js'
 import routerComment from '#routes/comment.js'
+import routerNotification from '#routes/notification.js'
 
 app.use('/uploads/avatars', express.static('/uploads/avatars'))
 
@@ -39,6 +40,7 @@ app.use('/posts', routeurPost);
 app.use('/users', routeurUser);
 app.use('/sub', routerSub);
 app.use('/comments', routerComment);
+app.use('/notifications', routerNotification);
 
 
 // app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);

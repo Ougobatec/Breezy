@@ -1,4 +1,5 @@
 import SubscriptionModel from "#models/subscription.js";
+import notificationController from './notification.js';
 
 // Supposons que tu as un middleware d'auth qui ajoute req.user (sinon à ajouter !)
 
@@ -17,6 +18,15 @@ const subController = {
                 subscriber_id: myUserId,
             });
             await subscription.save();
+            
+            // Créer une notification pour le nouvel abonné
+            await notificationController.createNotification(
+                targetId,
+                'follow',
+                myUserId,
+                'Vous avez un nouvel abonné'
+            );
+            
             res.status(201).json(subscription);
         } catch (err) {
             res.status(500).json({ error: err.message });
