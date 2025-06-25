@@ -1,0 +1,140 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import IconButton from "@/components/IconButton";
+
+export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
+    const [pop, setPop] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);
+
+    const postId = post._id || post.id;
+    const isLiked =
+        Array.isArray(post.likes) && currentUser
+            ? post.likes.includes(currentUser.id) || post.likes.includes(currentUser._id)
+            : false;
+
+    const handleLike = async () => {
+        if (isLiking) return;
+        setIsLiking(true);
+        try {
+            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}/like`;
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await response.json();
+            if (response.ok && data.post && onLikeUpdate) {
+                onLikeUpdate(data.post.likes);
+                setPop(true);
+                setTimeout(() => setPop(false), 300);
+            }
+        } catch { }
+        setIsLiking(false);
+    };
+
+    return (
+        <div className="rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+            {/* En-tête */}
+            <div className="flex items-center p-3.5">
+                {post.user_id?.avatar ? (
+                    <Image
+                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.user_id.avatar}`}
+                        alt="Avatar"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full mr-2 object-cover"
+                    />
+                ) : (
+                    <div className="w-10 h-10 rounded-full mr-2 flex items-center justify-center" style={{ backgroundColor: "var(--input)" }}>
+                        <Image
+                            src="/avatar.svg"
+                            alt="Avatar temporaire"
+                            width={40}
+                            height={40}
+                            className="w-6 h-6 rounded-full object-cover"
+                        />
+                    </div>
+                )}
+                <div className="flex flex-col flex-1 gap-0.5">
+                    <Link href={`/users/${post.user_id._id}`} className="flex items-center gap-1 font-semibold text-sm">
+                        <span>{post.user_id.name}</span>
+                        <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                            @{post.user_id.username}
+                        </span>
+                    </Link>
+                    <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        {post.created_at
+                            ? new Date(post.created_at).toLocaleString("fr-FR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                            })
+                            : "Date inconnue"}
+                    </div>
+                </div>
+                <IconButton icon="dots.svg" alt="Options" size={24} className="p-1" />
+            </div>
+
+            {/* Image du post */}
+            {post.media && (
+                <Image
+                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
+                    alt="post"
+                    className="w-full aspect-[16/9] object-cover mb-2"
+                    width={600}
+                    height={224}
+                />
+            )}
+
+            {/* Contenu */}
+            <div className="flex flex-col gap-2 px-2 text-sm">
+                <p className="px-1.5 break-words whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
+                    {post.content}
+                </p>
+                {post.tags?.length > 0 && (
+                    <div className="flex gap-1 flex-wrap text-xs" style={{ color: "var(--text-secondary)" }}>
+                        {post.tags.map((tag, i) => (
+                            <span key={i} className="border rounded-full px-2 py-1" style={{ borderColor: "var(--border)" }}>
+                                #{tag}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center p-2">
+                <IconButton
+                    icon="like.svg"
+                    activeIcon="like-active.svg"
+                    alt="Like"
+                    size={24}
+                    className={`p-1${pop ? " pop-animation" : ""}`}
+                    onClick={handleLike}
+                    isActive={isLiked}
+                    disabled={isLiking}
+                />
+                <IconButton
+                    href={`/posts/${postId}/comments`}
+                    icon="comment.svg"
+                    alt="Comment"
+                    size={24}
+                    className="p-1"
+                />
+                <IconButton
+                    href={`/posts/${postId}/shares`}
+                    icon="share.svg"
+                    alt="Share"
+                    size={24}
+                    className="p-1"
+                />
+            </div>
+        </div>
+    );
+}

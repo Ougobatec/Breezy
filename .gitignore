@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/node,react,nextjs
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,react,nextjs
 
+# Customize this file to your liking, or delete it if you don't need it.
+breezy-backend/uploads/*
+
 ### NextJS ###
 # dependencies
 /node_modules
@@ -109,8 +112,10 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.development
 .env.development.local
 .env.test.local
+.env.production
 .env.production.local
 .env.local
 
@@ -185,4 +190,3 @@ psd
 thumb
 sketch
 
-# End of https://www.toptal.com/developers/gitignore/api/node,react,nextjs

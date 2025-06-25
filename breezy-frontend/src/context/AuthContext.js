@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
                     return;
                 }
                 const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/authenticate`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/authenticate`,
                     { headers: { Authorization: `Bearer ${storedToken}` } }
                 );
                 if (!res.ok) {

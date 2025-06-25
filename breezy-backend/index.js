@@ -2,32 +2,30 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
+const app  = express();
 const PORT = process.env.PORT || 3000;
-
-const app = express();
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/breezy';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-    res.send('Welcome to Breezy Backend!');
-});
+app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads/avatars')));
 
-app.use('/auth', require('./src/routes/auth.routes'));
+app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
+app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
+
+app.use('/auth',  require('./src/routes/auth.routes'));
 app.use('/posts', require('./src/routes/post.routes'));
+app.use('/users', require('./src/routes/user.routes'));
 
-// Connect to MongoDB
-mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('Connected to MongoDB');
-        app.listen(PORT, () => {
-            console.log(`Backend is running on http://localhost:${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error('MongoDB connection error:', err);
-    });
+app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
 
+mongoose.connect(MONGO_URI)
+.then(() => {
+    console.log('Connected to MongoDB');
+    app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+})
+.catch(err => console.error('MongoDB connection error:', err));
