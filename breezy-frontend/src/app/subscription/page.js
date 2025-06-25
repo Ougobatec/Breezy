@@ -3,8 +3,10 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import LoadingScreen from "@/components/LoadingScreen";
 import React, { useEffect, useState } from "react";
-import BottomNav from "@/components/BottomNav";
+import Layout from "@/components/Layout";
+
 import SkeletonAvatar from "@/components/SkeletonAvatar";
+
 
 export default function SubscriptionPage() {
   const { user, token, loading } = useAuth();
@@ -92,8 +94,9 @@ export default function SubscriptionPage() {
     return <LoadingScreen text="Chargement des abonnements" />;
 
   return (
-    <>
-      <Header title="Abonnements" showButtons={true} />
+    <Layout headerProps={{ title: "Abonements" }}>
+
+       <Header title="Abonnements" showButtons={true} />
       <div className="px-4 py-2">
         <div className="mb-4 flex gap-2">
           <input
@@ -166,8 +169,9 @@ export default function SubscriptionPage() {
             Abonnements
           </button>
         </div>
-        <BottomNav />
       </div>
-    </>
+    
+    </Layout>
+
   );
 }

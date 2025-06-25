@@ -3,8 +3,9 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import LoadingScreen from "@/components/LoadingScreen";
 import React, { useEffect, useState } from "react";
-import BottomNav from "@/components/BottomNav";
+
 import SkeletonAvatar from "@/components/SkeletonAvatar";
+import Layout from "@/components/Layout";
 
 export default function HomePage() {
   const { user, token, loading, logout } = useAuth();
@@ -64,8 +65,8 @@ export default function HomePage() {
   if (followersLoading) return <LoadingScreen text="Chargement des abonnés" />;
 
   return (
-    <>
-      <Header title="Abonnés" showButtons={true} />
+
+      <Layout headerProps={{ title: "Follower" }}>
       <div className="px-4 py-2">
         <input
           type="text"
@@ -117,8 +118,9 @@ export default function HomePage() {
           </button>
           <button className="flex-1 py-3 text-gray-500">Abonnements</button>
         </div>
-        <BottomNav />
-      </div>
-    </>
+        </div>
+        </Layout >
+
+
   );
 }
