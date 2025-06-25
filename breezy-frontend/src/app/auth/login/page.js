@@ -1,5 +1,5 @@
 "use client";
-import Header from "@/components/Header";
+import Layout from "@/components/Layout";
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
 import { useState } from "react";
@@ -47,33 +47,24 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <Header title="Connexion" showButtons={false} />
-
-            {/* Contenu central */}
-            <div className="flex-1 flex flex-col justify-center px-4">
-                <div className="mb-6">
-                    <div className="text-2xl font-bold text-center">
-                        Connectez-vous à votre compte
-                    </div>
+        <Layout headerProps={{ title: "Connexion", showButtons: false }} showNav={false}>
+            <div className="flex flex-col justify-center gap-4 flex-1 p-4">
+                <div className="text-2xl font-bold text-center">
+                    Connectez-vous à votre compte
                 </div>
-                <div className="mb-4">
-                    <Link href="/auth/register" className="text-blue-600 text-sm hover:underline">
-                        Vous n’avez pas encore de compte ? Inscrivez-vous !
-                    </Link>
-                </div>
+                <Link href="/auth/register" className="text-blue-600 text-sm hover:underline">
+                    Vous n’avez pas encore de compte ? Inscrivez-vous !
+                </Link>
                 <AuthForm
                     fields={fields}
                     onSubmit={handleLogin}
                     submitLabel={loading ? "Connexion..." : "Se connecter"}
                 />
-                {error && <div className="text-red-600 text-sm mt-4">{error}</div>}
-                <div className="flex justify-end mt-4">
-                    <Link href="/auth/password-forget" className="text-blue-600 text-sm hover:underline">
-                        Mot de passe oublié ?
-                    </Link>
-                </div>
+                {error && <div className="text-red-600 text-sm">{error}</div>}
+                <Link href="/auth/password-forget" className="flex justify-end text-blue-600 text-sm hover:underline">
+                    Mot de passe oublié ?
+                </Link>
             </div>
-        </div>
+        </Layout>
     );
 }

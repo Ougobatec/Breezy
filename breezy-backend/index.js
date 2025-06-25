@@ -21,11 +21,14 @@ import routeurUser from '#routes/user.js'
 app.use('/uploads/avatars', express.static('/uploads/avatars'))
 
 app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
+app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
 
 app.use('/auth',  routeurAuth);
 app.use('/posts', routeurPost);
 app.use('/users', routeurUser);
 app.use('/sub', routerSub);
+
+app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
 
 mongoose.connect(MONGO_URI)
 .then(() => {
