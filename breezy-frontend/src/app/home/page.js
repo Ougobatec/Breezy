@@ -3,10 +3,12 @@ import LoadingScreen from "@/components/LoadingScreen";
 import Layout from "@/components/Layout";
 import PostCard from "@/components/PostCard";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 
 export default function HomePage() {
   const { user, token, loading } = useAuth();
+  const { t } = useLanguage();
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
 
@@ -38,17 +40,17 @@ export default function HomePage() {
   };
 
   if (!user) return null;
-  if (loading) return <LoadingScreen text="Chargement de la page..." />;
-  if (postsLoading) return <LoadingScreen text="Chargement des posts..." />;
+  if (loading) return <LoadingScreen text={t('loading')} />;
+  if (postsLoading) return <LoadingScreen text={t('loading')} />;
 
   return (
-    <Layout headerProps={{ title: "Accueil" }}>
+    <Layout headerProps={{ title: t('home') }}>
       <div className="text-xl font-bold p-4">
-        Bienvenue {user.name}
+        {t('welcomeMessage')} {user.name}
       </div>
       <div className="space-y-4 px-4 pb-4">
         {posts.length === 0 ? (
-          <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Aucun post à afficher.</div>
+          <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>{t('noPostsMessage')}</div>
         ) : (
           posts
             .sort(

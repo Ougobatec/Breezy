@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import Comments from "@/components/Comments";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PostCard({ post, token, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
+    const { t } = useLanguage();
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -42,7 +44,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
 
     const handleDeletePost = async () => {
         if (isDeleting) return;
-        if (!window.confirm("Voulez-vous vraiment supprimer ce post ?")) return;
+        if (!window.confirm(t('deletePostConfirm'))) return;
         
         setIsDeleting(true);
         try {
@@ -151,7 +153,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                                 onClick={handleDeletePost}
                                 disabled={isDeleting}
                             >
-                                {isDeleting ? "Suppression..." : "Supprimer"}
+                                {isDeleting ? `${t('delete')}...` : t('delete')}
                             </button>
                         </div>
                     )}
