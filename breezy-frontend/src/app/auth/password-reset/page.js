@@ -36,6 +36,7 @@ function PasswordResetContent() {
                         token,
                         newPassword: values.password,
                     }),
+                    credentials: "include",
                 }
             );
             const data = await res.json();

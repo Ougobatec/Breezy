@@ -11,28 +11,26 @@ export default function HomePage() {
   const [postsLoading, setPostsLoading] = useState(true);
 
   useEffect(() => {
-    if (loading || !user || !token) return;
-    const fetchPosts = async () => {
-      setPostsLoading(true);
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (!res.ok) throw new Error("Erreur lors du chargement des posts");
-        const data = await res.json();
-        setPosts(data.posts || data || []);
-      } catch (error) {
-        setPosts([]);
-      }
-      setPostsLoading(false);
-    };
-    fetchPosts();
-  }, [loading, user, token]);
+    if (loading || !user) return;
+      const fetchPosts = async () => {
+        setPostsLoading(true);
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
+            {
+              credentials: "include",
+            }
+          );
+          if (!res.ok) throw new Error("Erreur lors du chargement des posts");
+          const data = await res.json();
+          setPosts(data.posts || data || []);
+        } catch (error) {
+          setPosts([]);
+        }
+        setPostsLoading(false);
+      };
+      fetchPosts();
+  }, [loading, user]);
 
   // Gestion de la suppression d'un post
   const handleDeletePost = (postId) => {

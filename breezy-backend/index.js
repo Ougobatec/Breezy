@@ -1,27 +1,44 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import 'dotenv/config';
+import mongoose from 'mongoose';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import path from 'path';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/breezy';
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads/avatars')));
+
+import routerSub from '#routes/sub.js'
+import routeurPost from '#routes/post.js'
+import routeurAuth from '#routes/auth.js'
+import routeurUser from '#routes/user.js'
+import routerComment from '#routes/comment.js'
+
+app.use('/uploads/avatars', express.static('/uploads/avatars'))
 
 app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
-app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
 
-app.use('/auth',  require('./src/routes/auth.routes'));
-app.use('/posts', require('./src/routes/post.routes'));
-app.use('/users', require('./src/routes/user.routes'));
 
-app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
+app.use('/auth',  routeurAuth);
+app.use('/posts', routeurPost);
+app.use('/users', routeurUser);
+app.use('/sub', routerSub);
+app.use('/comments', routerComment);
+
+
+// app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
+
+// app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
 
 mongoose.connect(MONGO_URI)
 .then(() => {

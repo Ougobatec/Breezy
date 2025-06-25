@@ -49,8 +49,8 @@ export default function PublishPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
           body: formData,
+          credentials: "include",
         }
       );
       if (!res.ok) {

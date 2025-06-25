@@ -26,6 +26,7 @@ export default function PasswordForgetPage() {
                     body: JSON.stringify({
                         username: values.username
                     }),
+                    credentials: "include",
                 }
             );
             const data = await res.json();

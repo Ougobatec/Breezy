@@ -22,7 +22,7 @@ export default function ProfilePage() {
     useEffect(() => {
         if (!token) return;
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
         })
             .then(res => res.json())
             .then(data => setForm({
@@ -34,10 +34,10 @@ export default function ProfilePage() {
 
     // Récupération des posts (filtrage côté client si besoin, fallback si l'API ne supporte pas userId)
     useEffect(() => {
-        if (!user || !token) return;
+        if (!user) return;
         setPostsLoading(true);
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts?userId=${user._id || user.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
+            credentials: "include",
         })
             .then(res => res.json())
             .then(data => {
@@ -53,7 +53,7 @@ export default function ProfilePage() {
             })
             .catch(() => setPosts([]))
             .finally(() => setPostsLoading(false));
-    }, [user, token]);
+    }, [user]);
 
     // Gestion avatar
     const handleAvatarChange = e => {
@@ -79,8 +79,8 @@ export default function ProfilePage() {
         formData.append("removeAvatar", removeAvatar ? "true" : "false");
         await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
             method: "PUT",
-            headers: { Authorization: `Bearer ${token}` },
             body: formData,
+            credentials: "include",
         });
         setEditing(false);
         setAvatarPreview(null);
@@ -246,7 +246,7 @@ export default function ProfilePage() {
                 ) : posts.length === 0 ? (
                     <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Aucun post à afficher.</div>
                 ) : (
-                    posts
+                    (Array.isArray(posts) ? posts : [])
                         .sort(
                             (a, b) =>
                                 new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
