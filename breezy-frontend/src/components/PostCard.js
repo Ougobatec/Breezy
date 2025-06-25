@@ -5,7 +5,7 @@ import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import Comments from "@/components/Comments";
 
-export default function PostCard({ post, token, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
+export default function PostCard({ post, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -49,9 +49,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
             const response = await fetch(url, {
                 method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: "include",
             });
             
             if (response.ok && onDeletePost) {
@@ -231,7 +229,6 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 
                 <Comments
                     postId={postId}
-                    token={token}
                     user={currentUser}
                     onClose={() => setShowComments(false)}
                 />

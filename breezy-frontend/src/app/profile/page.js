@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-    const { user, token, login, loading } = useAuth();
+    const { user, loading } = useAuth();
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({ name: "", bio: "" });
     const [posts, setPosts] = useState([]);
@@ -20,7 +20,7 @@ export default function ProfilePage() {
 
     // Initialisation du formulaire
     useEffect(() => {
-        if (!token) return;
+        if (!user) return;
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
             credentials: "include",
         })
@@ -30,7 +30,7 @@ export default function ProfilePage() {
                 bio: data.biography || ""
             }))
             .catch(() => setForm({ name: user?.name || "", bio: "" }));
-    }, [token, user?.name]);
+    }, [user?.name]);
 
     // Récupération des posts (filtrage côté client si besoin, fallback si l'API ne supporte pas userId)
     useEffect(() => {
@@ -255,7 +255,6 @@ export default function ProfilePage() {
                             <PostCard
                                 key={post._id || post.id}
                                 post={post}
-                                token={token}
                                 currentUser={user}
                                 showDeleteOption={true}
                                 onDeletePost={handleDeletePost}

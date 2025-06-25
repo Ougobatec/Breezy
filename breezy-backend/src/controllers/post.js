@@ -71,6 +71,29 @@ const postController = {
         } catch (error) {
             res.status(500).json({ message: "Erreur lors de la mise à jour du post", error: error.message });
         }
+    },
+
+    // Supprimer un post
+    deletePost: async (req, res) => {
+        const postId = req.params.id;
+        const userId = req.user.userId;
+
+        try {
+            const post = await PostModel.findById(postId);
+            if (!post) {
+                return res.status(404).json({ message: "Post non trouvé." });
+            }
+
+            // Vérifier si l'utilisateur est le propriétaire du post
+            if (post.user_id.toString() !== userId) {
+                return res.status(403).json({ message: "Vous n'êtes pas autorisé à supprimer ce post." });
+            }
+
+            await PostModel.findByIdAndDelete(postId);
+            res.status(200).json({ message: "Post supprimé avec succès" });
+        } catch (error) {
+            res.status(500).json({ message: "Erreur lors de la suppression du post", error: error.message });
+        }
     }
 }
 

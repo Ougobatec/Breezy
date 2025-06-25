@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 
 export default function HomePage() {
-  const { user, token, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
 
@@ -60,7 +60,6 @@ export default function HomePage() {
               <PostCard
                 key={post._id || post.id}
                 post={post}
-                token={token}
                 currentUser={user}
                 showDeleteOption={true}
                 onDeletePost={handleDeletePost}
