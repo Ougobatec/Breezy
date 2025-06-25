@@ -1,5 +1,3 @@
-
-
 import UserModel from "#models/user.js";
 import multer from "multer";
 import path from "path";

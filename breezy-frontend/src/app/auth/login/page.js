@@ -30,6 +30,7 @@ export default function LoginPage() {
                         username: values.username,
                         password: values.password,
                     }),
+                    credentials: "include",
                 }
             );
             const data = await res.json();
