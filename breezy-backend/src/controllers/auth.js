@@ -1,7 +1,9 @@
+import jwt from "jsonwebtoken";
 import userModel from "#models/user.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { OAuth2Client } from "google-auth-library";
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 
@@ -164,7 +166,67 @@ const authController = {
             }
             res.status(500).json({ message: "Erreur interne du serveur" });
         }
-    }
-}
+    },
 
-export default authController
+    googleAuth: async (req, res) => {
+        const { id_token } = req.body;
+        try {
+            // Vérifie et décode le token Google
+            const ticket = await client.verifyIdToken({
+                idToken: id_token,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            // payload contient : email, name, picture, sub (googleId), etc.
+            const email = payload.email;
+            const name = payload.name;
+            const avatar = payload.picture;
+            const googleId = payload.sub;
+            const username = email.split("@")[0];
+
+            // Recherche l'utilisateur par email (ou googleId si tu le stockes)
+            let user = await userModel.findOne({ email });
+            if (!user) {
+                // Génère un username unique si besoin
+                let uniqueUsername = username;
+                let count = 1;
+                while (await userModel.findOne({ username: uniqueUsername })) {
+                    uniqueUsername = `${username}${count}`;
+                    count++;
+                }
+                // Crée l'utilisateur sans mot de passe
+                user = new userModel({
+                    name,
+                    username: uniqueUsername,
+                    email,
+                    password: "google", // valeur factice, non utilisée
+                    avatar: avatar || "",
+                    googleId: googleId || "",
+                });
+                await user.save();
+            }
+            // Génère le token JWT
+            const token = jwt.sign(
+                { userId: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: "1h" }
+            );
+            res.status(200).json({
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    email: user.email,
+                    avatar: user.avatar,
+                },
+            });
+        } catch (error) {
+            res.status(401).json({ message: "Token Google invalide" });
+        }
+    },
+
+    // ...autres méthodes...
+};
+
+export default authController;

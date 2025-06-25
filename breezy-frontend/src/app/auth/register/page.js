@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from "axios";
+import Image from "next/image";
 
 export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
@@ -55,12 +58,69 @@ export default function RegisterPage() {
         }
     };
 
+    // Ajoute la fonction de login Google
+    const handleGoogleRegister = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                // Récupère les infos du profil Google
+                const res = await axios.get(
+                    `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenResponse.access_token}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokenResponse.access_token}`,
+                            Accept: "application/json",
+                        },
+                    }
+                );
+                const profile = res.data;
+                // Génère un username à partir de l'email si besoin
+                const username = profile.email.split("@")[0];
+
+                // Appelle ton backend pour créer ou connecter l'utilisateur
+                const backendRes = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            name: profile.name,
+                            username,
+                            email: profile.email,
+                            avatar: profile.picture, // si tu veux stocker l'avatar
+                            googleId: profile.id,    // optionnel, pour lier le compte
+                        }),
+                    }
+                );
+                const data = await backendRes.json();
+                if (!backendRes.ok) {
+                    setError(data.message || "Erreur lors de l'inscription Google.");
+                } else {
+                    login(data.token, data.user);
+                    router.replace("/");
+                }
+            } catch (e) {
+                setError("Erreur lors de l'inscription avec Google.");
+            }
+        },
+        onError: () => setError("Connexion Google échouée."),
+    });
+
     return (
         <Layout headerProps={{ title: "Inscription", showButtons: false }} showNav={false}>
             <div className="flex flex-col justify-center gap-4 flex-1 p-4">
                 <div className="text-2xl font-bold text-center">
                     Créer un compte
                 </div>
+                <button
+                    onClick={() => handleGoogleRegister()}
+                    className="bg-white border border-gray-300 rounded-lg py-2 px-4 flex items-center justify-center gap-2 hover:bg-gray-50"
+                    disabled={loading}
+                    >
+                    <Image src="/google.svg" alt="Google" width={20} height={20} className="w-5 h-5" />
+                    <img src="/google.svg" alt="Google" className="w-5 h-5" />
+                    S'inscrire avec Google
+                </button>
+                <span className="text-center text-gray-400">ou</span>
                 <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
                     Vous avez déjà un compte ? Connectez-vous !
                 </Link>

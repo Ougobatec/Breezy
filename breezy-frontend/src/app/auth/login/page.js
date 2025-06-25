@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { GoogleLogin } from '@react-oauth/google';
+import axios from "axios";
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
@@ -45,6 +47,37 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+    const responseMessage = async (response) => {
+        setError("");
+        setLoading(true);
+        try {
+            // Envoie le credential (id_token) au backend
+            const backendRes = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        id_token: response.credential,
+                    }),
+                }
+            );
+            const data = await backendRes.json();
+            if (!backendRes.ok) {
+                setError(data.message || "Erreur lors de la connexion Google.");
+            } else {
+                login(data.token, data.user);
+                router.replace("/home");
+            }
+        } catch (e) {
+            setError("Erreur lors de la connexion avec Google.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    const errorMessage = (error) => {
+        console.log(error);
+    };
 
     return (
         <Layout headerProps={{ title: "Connexion", showButtons: false }} showNav={false}>
@@ -61,6 +94,7 @@ export default function LoginPage() {
                     submitLabel={loading ? "Connexion..." : "Se connecter"}
                 />
                 {error && <div className="text-red-600 text-sm">{error}</div>}
+                <GoogleLogin onSuccess={responseMessage} onError={errorMessage} />
                 <Link href="/auth/password-forget" className="flex justify-end text-blue-600 text-sm hover:underline">
                     Mot de passe oublié ?
                 </Link>
