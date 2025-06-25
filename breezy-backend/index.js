@@ -22,15 +22,18 @@ import routerSub from '#routes/sub.js'
 import routeurPost from '#routes/post.js'
 import routeurAuth from '#routes/auth.js'
 import routeurUser from '#routes/user.js'
+import routerComment from '#routes/comment.js'
 
 app.use('/uploads/avatars', express.static('/uploads/avatars'))
 
 app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
 
+
 app.use('/auth',  routeurAuth);
 app.use('/posts', routeurPost);
 app.use('/users', routeurUser);
 app.use('/sub', routerSub);
+app.use('/comments', routerComment);
 
 
 // app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
