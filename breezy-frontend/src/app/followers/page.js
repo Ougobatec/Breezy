@@ -24,7 +24,6 @@ export default function HomePage() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ folower: user._id || user.id }),
           }
         );
         if (!res.ok) throw new Error("Erreur lors du chargement des abonnés");
@@ -37,6 +36,28 @@ export default function HomePage() {
     };
     fetchFollowers();
   }, [loading, user, token]);
+
+  const handleRemoveFollower = async (followerUserId) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/remove-follower`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ followerUserId }),
+        }
+      );
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
+      setFollowers((prev) =>
+        prev.filter((f) => (f._id || f.id) !== followerUserId)
+      );
+    } catch (error) {
+      // Optionnel : afficher une erreur à l’utilisateur
+    }
+  };
 
   if (loading) return <LoadingScreen text="Connexion en cours..." />;
   if (!user) return null;
@@ -69,7 +90,7 @@ export default function HomePage() {
                     </span>
                   </div>
                 </div>
-                <button>
+                <button onClick={() => handleRemoveFollower(f._id || f.id)}>
                   <svg
                     className="w-6 h-6 text-gray-500"
                     fill="none"

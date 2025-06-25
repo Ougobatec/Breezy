@@ -10,6 +10,8 @@ export default function SubscriptionPage() {
   const { user, token, loading } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
+  const [targetId, setTargetId] = useState("");
+  const [subscribeMsg, setSubscribeMsg] = useState("");
 
   useEffect(() => {
     if (loading || !user || !token) return;
@@ -24,7 +26,6 @@ export default function SubscriptionPage() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ subscription: user._id || user.id }),
           }
         );
         if (!res.ok) throw new Error("Erreur lors du chargement des abonnements");
@@ -38,6 +39,53 @@ export default function SubscriptionPage() {
     fetchSubscriptions();
   }, [loading, user, token]);
 
+  const handleSubscribe = async () => {
+    if (!targetId) return;
+    try {
+      console.log("Tentative d'abonnement à l'ID :", targetId);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/subscribe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ targetId }),
+        }
+      );
+      if (!res.ok) throw new Error("Erreur lors de l'abonnement");
+      setSubscribeMsg("Abonnement réussi");
+      setTargetId("");
+      // Optionally, refetch subscriptions or update state
+    } catch (error) {
+      setSubscribeMsg("Erreur lors de l'abonnement");
+    }
+  };
+
+  const handleUnsubscribe = async (unfollowUserId) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/unsubscribe`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ unfollowUserId }),
+        }
+      );
+      if (!res.ok) throw new Error("Erreur lors du désabonnement");
+      // Met à jour la liste localement sans refetch
+      setSubscriptions((subs) =>
+        subs.filter((s) => (s._id || s.id) !== unfollowUserId)
+      );
+    } catch (error) {
+      setSubscribeMsg("Erreur lors du désabonnement");
+    }
+  };
+
   if (loading) return <LoadingScreen text="Connexion en cours..." />;
   if (!user) return null;
   if (subscriptionsLoading)
@@ -47,6 +95,24 @@ export default function SubscriptionPage() {
     <>
       <Header title="Abonnements" showButtons={true} />
       <div className="px-4 py-2">
+        <div className="mb-4 flex gap-2">
+          <input
+            type="text"
+            placeholder="ID utilisateur à suivre"
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
+            className="border px-2 py-1 rounded"
+          />
+          <button
+            onClick={handleSubscribe}
+            className="bg-blue-500 text-white px-3 py-1 rounded"
+          >
+            S'abonner
+          </button>
+          {subscribeMsg && (
+            <span className="ml-2 text-sm">{subscribeMsg}</span>
+          )}
+        </div>
         <input
           type="text"
           placeholder="Rechercher"
@@ -70,7 +136,10 @@ export default function SubscriptionPage() {
                     </span>
                   </div>
                 </div>
-                <button>
+                <button
+                  onClick={() => handleUnsubscribe(s._id || s.id)}
+                  aria-label="Se désabonner"
+                >
                   <svg
                     className="w-6 h-6 text-gray-500"
                     fill="none"
