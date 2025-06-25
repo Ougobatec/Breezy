@@ -1,12 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
 
-export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
+export default function PostCard({ post, token, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const postId = post._id || post.id;
     const isLiked =
@@ -35,6 +37,59 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
         } catch { }
         setIsLiking(false);
     };
+
+    const handleDeletePost = async () => {
+        if (isDeleting) return;
+        if (!window.confirm("Voulez-vous vraiment supprimer ce post ?")) return;
+        
+        setIsDeleting(true);
+        try {
+            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            
+            if (response.ok && onDeletePost) {
+                onDeletePost(postId);
+            } else {
+                alert("Erreur lors de la suppression du post.");
+            }
+        } catch (error) {
+            alert("Erreur lors de la suppression du post.");
+        }
+        setIsDeleting(false);
+        setShowMenu(false);
+    };
+
+    const toggleMenu = () => {
+        setShowMenu(!showMenu);
+    };
+
+    // Fermer le menu si on clique ailleurs
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.post-menu')) {
+                setShowMenu(false);
+            }
+        };
+        
+        if (showMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showMenu]);
+
+    // Vérifier si l'utilisateur actuel peut supprimer ce post
+    const canDeletePost = showDeleteOption && currentUser && (
+        currentUser.id === post.user_id?._id || 
+        currentUser._id === post.user_id?._id ||
+        currentUser.id === post.user_id ||
+        currentUser._id === post.user_id
+    );
 
     return (
         <div className="rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
@@ -78,7 +133,27 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
                             : "Date inconnue"}
                     </div>
                 </div>
-                <IconButton icon="dots.svg" alt="Options" size={24} className="p-1" />
+                <div className="relative post-menu">
+                    <IconButton 
+                        icon="dots.svg" 
+                        alt="Options" 
+                        size={24} 
+                        className="p-1"
+                        onClick={canDeletePost ? toggleMenu : undefined}
+                        style={{ cursor: canDeletePost ? 'pointer' : 'default' }}
+                    />
+                    {showMenu && canDeletePost && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow z-10" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+                            <button
+                                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-800 text-sm"
+                                onClick={handleDeletePost}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Suppression..." : "Supprimer"}
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Image du post */}

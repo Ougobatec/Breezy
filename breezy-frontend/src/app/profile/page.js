@@ -15,7 +15,6 @@ export default function ProfilePage() {
     const [postsLoading, setPostsLoading] = useState(true);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [removeAvatar, setRemoveAvatar] = useState(false);
-    const [openMenuPostId, setOpenMenuPostId] = useState(null);
     const fileInputRef = useRef(null);
     const router = useRouter();
 
@@ -90,31 +89,9 @@ export default function ProfilePage() {
     };
 
     // Suppression d'un post
-    const handleDeletePost = async (postId) => {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
-        if (!window.confirm("Voulez-vous vraiment supprimer ce post ?")) return;
-        const res = await fetch(url, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-            setPosts((prev) => prev.filter((p) => p._id !== postId));
-        } else {
-            alert("Erreur lors de la suppression du post.");
-        }
-        setOpenMenuPostId(null);
+    const handleDeletePost = (postId) => {
+        setPosts((prev) => prev.filter((p) => p._id !== postId));
     };
-
-    // Fermer le menu contextuel si on clique ailleurs
-    useEffect(() => {
-        const handleClick = (e) => {
-            if (!e.target.closest('.post-menu')) setOpenMenuPostId(null);
-        };
-        if (openMenuPostId !== null) {
-            document.addEventListener('mousedown', handleClick);
-        }
-        return () => document.removeEventListener('mousedown', handleClick);
-    }, [openMenuPostId]);
 
     // Reset du formulaire
     const handleCancel = () => {
@@ -275,53 +252,19 @@ export default function ProfilePage() {
                                 new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
                         )
                         .map((post) => (
-                            <div key={post._id || post.id} className="bg-white rounded-xl shadow p-4 mb-4">
-                                <div className="flex items-center mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 mr-2 overflow-hidden">
-                                        {user && user.avatar ? (
-                                            <img src={user.avatar.startsWith("http") ? user.avatar : `${process.env.NEXT_PUBLIC_BACKEND_URL}${user.avatar.startsWith("/") ? user.avatar : "/" + user.avatar}`}
-                                                alt="Avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <svg className="w-full h-full text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="8" r="4" strokeWidth="2" /><path strokeWidth="2" d="M4 20c0-4 8-4 8-4s8 0 8 4" /></svg>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold text-sm">{user?.name || "Nom"}</span>
-                                        <span className="text-gray-400 text-xs ml-1">@{user?.username || "username"}</span>
-                                        <div className="text-xs text-gray-400">{post.created_at ? new Date(post.created_at).toLocaleString() : ""}</div>
-                                    </div>
-                                    <div className="ml-auto text-gray-400 cursor-pointer relative post-menu">
-                                        <span onClick={() => setOpenMenuPostId(post._id)}>•••</span>
-                                        {openMenuPostId === post._id && (
-                                            <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow z-10">
-                                                <button
-                                                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-800"
-                                                    onClick={() => handleDeletePost(post._id)}
-                                                >
-                                                    Supprimer
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                {post.media && post.media !== "" && (
-                                    <img src={post.media.startsWith("http") ? post.media : `${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media.startsWith("/") ? post.media : "/" + post.media}`}
-                                        alt="post" className="w-full h-48 object-cover rounded-lg mb-2" />
-                                )}
-                                <p className="text-gray-700 text-sm mb-2">{post.content}</p>
-                                {post.tags && post.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mb-2">
-                                        {post.tags.map((tag, idx) => (
-                                            <span key={idx} className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">{tag}</span>
-                                        ))}
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-4 text-gray-500 text-xl">
-                                    <button className="hover:text-red-500"><i className="far fa-heart"></i></button>
-                                    <button className="hover:text-blue-500"><i className="far fa-comment"></i></button>
-                                    <button className="hover:text-gray-700"><i className="far fa-share-square"></i></button>
-                                </div>
-                            </div>
+                            <PostCard
+                                key={post._id || post.id}
+                                post={post}
+                                token={token}
+                                currentUser={user}
+                                showDeleteOption={true}
+                                onDeletePost={handleDeletePost}
+                                onLikeUpdate={(likes) => {
+                                    setPosts(prev => prev.map(p => 
+                                        p._id === post._id ? { ...p, likes } : p
+                                    ));
+                                }}
+                            />
                         ))
                 )}
             </div>
