@@ -1,11 +1,11 @@
 "use client";
-import Header from "@/components/Header";
+import Layout from "@/components/Layout";
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-function PasswordChangePageContent() {
+function PasswordResetContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -55,37 +55,30 @@ function PasswordChangePageContent() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <Header title="Changer le mot de passe" showButtons={false} />
-
-            {/* Contenu central */}
-            <div className="flex-1 flex flex-col justify-center px-4">
-                <div className="mb-6">
-                    <div className="text-2xl font-bold text-center">
-                        Modifiez votre mot de passe
-                    </div>
+        <Layout headerProps={{ title: "Réinitialiser le mot de passe", showButtons: false }} showNav={false}>
+            <div className="flex flex-col justify-center gap-4 flex-1 p-4">
+                <div className="text-2xl font-bold text-center">
+                    Modifiez votre mot de passe
                 </div>
-                <div className="mb-4">
-                    <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
-                        Retour à la connexion
-                    </Link>
-                </div>
+                <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
+                    Retour à la connexion
+                </Link>
                 <AuthForm
                     fields={fields}
                     onSubmit={handleReset}
                     submitLabel={loading ? "Enregistrement..." : "Enregistrer"}
                 />
-                {error && <div className="text-red-600 text-sm mt-4">{error}</div>}
-                {success && <div className="text-green-600 text-sm mt-4">{success}</div>}
+                {error && <div className="text-red-600 text-sm">{error}</div>}
+                {success && <div className="text-green-600 text-sm">{success}</div>}
             </div>
-        </div>
+        </Layout>
     );
 }
 
-export default function PasswordChangePage() {
-    return (
-        <Suspense fallback={<div>Chargement...</div>}>
-            <PasswordChangePageContent />
-        </Suspense>
-    );
+export default function Page() {
+  return (
+    <Suspense>
+      <PasswordResetContent />
+    </Suspense>
+  );
 }

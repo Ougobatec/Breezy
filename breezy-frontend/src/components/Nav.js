@@ -1,5 +1,5 @@
 "use client";
-import NavIconButton from "@/components/NavIconButton";
+import IconButton from "@/components/IconButton";
 import { usePathname } from "next/navigation";
 
 const navItems = [
@@ -14,11 +14,11 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 px-5 w-full flex justify-around items-center z-50 py-2" style={{ backgroundColor: "var(--UI)", borderTop: "1px solid var(--border)" }}>
+    <nav className="w-full flex justify-around items-center px-5 py-2 fixed bottom-0 left-0 z-50" style={{ backgroundColor: "var(--UI)", borderTop: "1px solid var(--border)" }}>
       {navItems.map(({ href, icon, activeIcon, alt }) => {
         const isActive = pathname === href || pathname.startsWith(href + "/");
         return (
-          <NavIconButton key={href} href={href} icon={icon} activeIcon={activeIcon} alt={alt} isActive={isActive} />        );
+          <IconButton key={href} href={href} icon={icon} activeIcon={activeIcon} alt={alt} isActive={isActive} className="p-2" />);
       })}
     </nav>
   );
