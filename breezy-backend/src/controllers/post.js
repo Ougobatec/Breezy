@@ -17,8 +17,12 @@ const postController = {
     // Récupérer tous les posts
     getAllPosts: async (req, res) => {
         try {
-            const posts = await PostModel.find().sort({ createdAt: -1 }).populate('user_id', 'username name avatar');
-        
+            // Si un userId est passé en query, on filtre sur cet utilisateur
+            const filter = req.query.userId ? { user_id: req.query.userId } : {};
+            const posts = await PostModel.find(filter)
+                .sort({ createdAt: -1 })
+                .populate('user_id', 'username name avatar');
+
             if (!posts || posts.length === 0) {
                 return res.status(404).json({ message: "Aucun post trouvé." });
             }
@@ -28,6 +32,8 @@ const postController = {
             res.status(500).json({ message: "Erreur lors de la récupération des posts", error: error.message });
         }
     },
+
+    // Récupérer un post par son ID
     getPostLikes : async (req, res) => {
         const postId = req.params.id;
     
