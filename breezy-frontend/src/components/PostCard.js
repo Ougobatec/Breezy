@@ -94,9 +94,9 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     );
 
     return (
-        <div className="relative rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-            {/* En-tête */}
-            <div className="flex items-center p-3.5">
+        <div className="bg-white rounded-xl shadow p-3 mb-3" style={{ backgroundColor: "var(--card)" }}>
+            {/* Header avec avatar et infos utilisateur */}
+            <div className="flex items-start gap-2.5 mb-3">
                 {post.user_id?.avatar ? (
                     <Image
                         src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.user_id.avatar}`}
@@ -174,10 +174,19 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 <p className="px-1.5 break-words whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
                     {post.content}
                 </p>
+                
+                {/* Affichage des tags */}
                 {post.tags?.length > 0 && (
-                    <div className="flex gap-1 flex-wrap text-xs" style={{ color: "var(--text-secondary)" }}>
+                    <div className="flex gap-1 flex-wrap text-xs px-1.5">
                         {post.tags.map((tag, i) => (
-                            <span key={i} className="border rounded-full px-2 py-1" style={{ borderColor: "var(--border)" }}>
+                            <span
+                                key={i}
+                                className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded-full"
+                                style={{ 
+                                    backgroundColor: "var(--primary-light, #dbeafe)", 
+                                    color: "var(--primary, #3b82f6)" 
+                                }}
+                            >
                                 #{tag}
                             </span>
                         ))}
@@ -185,7 +194,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 )}
             </div>
 
-            {/* Actions */}
+            {/* Actions (likes, commentaires, etc.) */}
             <div className="flex items-center p-2">
                 <IconButton
                     icon="like.svg"
