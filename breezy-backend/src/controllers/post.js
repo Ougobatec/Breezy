@@ -4,9 +4,30 @@ import SubscriptionModel from "#models/subscription.js"
 const postController = {
     createPost: async (req, res) => {
         try {
-            const { content } = req.body;
+            const { content, tags } = req.body;
             const userId = req.user.userId;
-            const post = new PostModel({ content, user_id: userId });
+            
+            // Nettoyer et valider les tags
+            let cleanTags = [];
+            if (tags) {
+                if (Array.isArray(tags)) {
+                    cleanTags = tags
+                        .filter(tag => tag && typeof tag === 'string')
+                        .map(tag => tag.trim().toLowerCase().replace('#', ''))
+                        .filter(tag => tag.length > 0 && tag.length <= 50);
+                } else if (typeof tags === 'string') {
+                    cleanTags = [tags.trim().toLowerCase().replace('#', '')];
+                }
+                // Supprimer les doublons
+                cleanTags = [...new Set(cleanTags)];
+            }
+            
+            const post = new PostModel({ 
+                content, 
+                user_id: userId,
+                tags: cleanTags
+            });
+            
             await post.save();
             res.status(201).json({ message: "Post créé avec succès", post });
         } catch (error) {
