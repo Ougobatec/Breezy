@@ -69,12 +69,26 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
         }
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ token, user: { id: user._id, name: user.name, username: user.username, email: user.email } });
+
+        // Envoie le token dans un cookie HTTP-only
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 3600 * 1000, // 1h
+        });
+
+        res.status(200).json({ user: { id: user._id, name: user.name, username: user.username, email: user.email } });
     } catch (error) {
         console.error("Erreur lors de la connexion :", error);
         res.status(500).json({ message: "Erreur interne du serveur" });
     }
-}
+};
+
+exports.logout = async (req, res) => {
+    res.clearCookie("token");
+    res.status(200).json({ message: "Déconnexion réussie" });
+};
 
 exports.authenticate = async (req, res) => {
     try {
