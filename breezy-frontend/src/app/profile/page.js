@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-    const { user, token, loading } = useAuth();
+    const { user, token, login, loading } = useAuth();
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({ name: "", bio: "" });
     const [posts, setPosts] = useState([]);
@@ -22,7 +22,7 @@ export default function ProfilePage() {
     useEffect(() => {
         if (!token) return;
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
         })
             .then(res => res.json())
             .then(data => setForm({
@@ -32,18 +32,28 @@ export default function ProfilePage() {
             .catch(() => setForm({ name: user?.name || "", bio: "" }));
     }, [token, user?.name]);
 
-    // Récupération des posts
+    // Récupération des posts (filtrage côté client si besoin, fallback si l'API ne supporte pas userId)
     useEffect(() => {
-        if (!user || !token) return;
+        if (!user) return;
         setPostsLoading(true);
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts?userId=${user._id || user.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
+            credentials: "include",
         })
             .then(res => res.json())
-            .then(data => setPosts(data.posts || data || []))
+            .then(data => {
+                // Si l'API renvoie tous les posts, filtrer côté client
+                let postsArray = data.posts || data || [];
+                if (Array.isArray(postsArray) && postsArray.length > 0 && postsArray[0].user_id) {
+                    postsArray = postsArray.filter((post) =>
+                        (typeof post.user_id === "string" && post.user_id === (user._id || user.id)) ||
+                        (typeof post.user_id === "object" && post.user_id?._id === (user._id || user.id))
+                    );
+                }
+                setPosts(postsArray);
+            })
             .catch(() => setPosts([]))
             .finally(() => setPostsLoading(false));
-    }, [user, token]);
+    }, [user]);
 
     // Gestion avatar
     const handleAvatarChange = e => {
@@ -58,7 +68,7 @@ export default function ProfilePage() {
         setRemoveAvatar(true);
     };
 
-    // Sauvegarde du profil
+    // Sauvegarde du profil (nom, bio, avatar)
     const handleProfileUpdate = async () => {
         const formData = new FormData();
         formData.append("name", form.name);
@@ -69,10 +79,18 @@ export default function ProfilePage() {
         formData.append("removeAvatar", removeAvatar ? "true" : "false");
         await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
             method: "PUT",
-            headers: { Authorization: `Bearer ${token}` },
             body: formData,
+            credentials: "include",
         });
+        setEditing(false);
+        setAvatarPreview(null);
+        setRemoveAvatar(false);
         router.replace(router.asPath); // Rafraîchit la page sans reload complet
+    };
+
+    // Suppression d'un post
+    const handleDeletePost = (postId) => {
+        setPosts((prev) => prev.filter((p) => p._id !== postId));
     };
 
     // Reset du formulaire
@@ -175,7 +193,7 @@ export default function ProfilePage() {
                                 <span className="font-bold text-base text-gray-800">{user.name || "Name"}</span>
                                 <span className="text-xs text-gray-400">@{user.username || "username"}</span>
                                 <p className="text-xs text-gray-600 mt-2">
-                                    {form.bio || "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor."}
+                                    {form.bio || "Ajoutez une bio à votre profil."}
                                 </p>
                             </>
                         )}
@@ -223,14 +241,15 @@ export default function ProfilePage() {
                 Posts
             </div>
             <div className="space-y-4 px-4 pb-4">
-                {(Array.isArray(posts) ? posts : []).length === 0 ? (
+                {postsLoading ? (
+                    <div className="text-center text-gray-400">Chargement des posts...</div>
+                ) : posts.length === 0 ? (
                     <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Aucun post à afficher.</div>
                 ) : (
                     (Array.isArray(posts) ? posts : [])
                         .sort(
                             (a, b) =>
-                                new Date(b.created_at || b.createdAt) -
-                                new Date(a.created_at || a.createdAt)
+                                new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
                         )
                         .map((post) => (
                             <PostCard
@@ -238,15 +257,13 @@ export default function ProfilePage() {
                                 post={post}
                                 token={token}
                                 currentUser={user}
-                                onLikeUpdate={(likes) =>
-                                    setPosts((prev) =>
-                                        (Array.isArray(prev) ? prev : []).map((p) =>
-                                            (p._id || p.id) === (post._id || post.id)
-                                                ? { ...p, likes }
-                                                : p
-                                        )
-                                    )
-                                }
+                                showDeleteOption={true}
+                                onDeletePost={handleDeletePost}
+                                onLikeUpdate={(likes) => {
+                                    setPosts(prev => prev.map(p => 
+                                        p._id === post._id ? { ...p, likes } : p
+                                    ));
+                                }}
                             />
                         ))
                 )}

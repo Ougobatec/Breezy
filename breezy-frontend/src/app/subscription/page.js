@@ -9,14 +9,14 @@ import SkeletonAvatar from "@/components/SkeletonAvatar";
 
 
 export default function SubscriptionPage() {
-  const { user, token, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
   const [targetId, setTargetId] = useState("");
   const [subscribeMsg, setSubscribeMsg] = useState("");
 
   useEffect(() => {
-    if (loading || !user || !token) return;
+    if (loading || !user) return;
     const fetchSubscriptions = async () => {
       setSubscriptionsLoading(true);
       try {
@@ -26,8 +26,8 @@ export default function SubscriptionPage() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
             },
+            credentials: "include",
           }
         );
         if (!res.ok) throw new Error("Erreur lors du chargement des abonnements");
@@ -39,24 +39,26 @@ export default function SubscriptionPage() {
       setSubscriptionsLoading(false);
     };
     fetchSubscriptions();
-  }, [loading, user, token]);
+  }, [loading, user]);
 
   const handleSubscribe = async () => {
     if (!targetId) return;
     try {
-      console.log("Tentative d'abonnement à l'ID :", targetId);
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/subscribe`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ targetId }),
-        }
-      );
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/subscribe`;
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          subscription_id: targetId,
+        }),
+      };
+
+      const res = await fetch(url, options);
       if (!res.ok) throw new Error("Erreur lors de l'abonnement");
+
       setSubscribeMsg("Abonnement réussi");
       setTargetId("");
       // Optionally, refetch subscriptions or update state
@@ -73,9 +75,9 @@ export default function SubscriptionPage() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ unfollowUserId }),
+          credentials: "include",
         }
       );
       if (!res.ok) throw new Error("Erreur lors du désabonnement");
@@ -110,7 +112,7 @@ export default function SubscriptionPage() {
             onClick={handleSubscribe}
             className="bg-blue-500 text-white px-3 py-1 rounded"
           >
-            S'abonner
+            S&apos;abonner
           </button>
           {subscribeMsg && (
             <span className="ml-2 text-sm">{subscribeMsg}</span>

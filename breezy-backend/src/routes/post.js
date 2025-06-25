@@ -7,14 +7,18 @@ import multer from 'multer';
 
 const upload = multer(); // stockage en mémoire
 
-const PostRouter = express.Router();
+const postRouter = express.Router();
 
 // Route pour créer un post
-PostRouter.post("/", authMiddleware, upload.single("image"), postController.createPost);
-PostRouter.get("/", authMiddleware, postController.getAllPosts);
+postRouter.post("/", authMiddleware, upload.single("image"), postController.createPost);
+postRouter.get("/", authMiddleware, postController.getAllPosts);
 
 // Route pour liker un post
-PostRouter.put("/:id/like", authMiddleware, postController.likePost);
-PostRouter.get("/:id/like", authMiddleware, postController.getPostLikes);
+postRouter.put("/:id/like", authMiddleware, postController.likePost);
+postRouter.get("/:id/like", authMiddleware, postController.getPostLikes);
 
-export default PostRouter;
+// Route pour récupérer le flux de posts
+postRouter.get("/flow", authMiddleware, postController.getFlowPosts);
+
+
+export default postRouter;

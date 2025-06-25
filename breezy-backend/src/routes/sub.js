@@ -2,13 +2,13 @@ import subController from '#controllers/sub.js';
 import express from 'express';
 import auth from '#middlewares/auth.js';
 
-const routerSub = express.Router();
+const subRouter = express.Router();
 
-routerSub.post("/subscribe", auth, subController.subscriptionAdd);
-routerSub.get("/follower", auth, subController.followerGet);
-routerSub.get("/subscriptions", auth, subController.subscriptionsGet);
-routerSub.delete("/unsubscribe", auth, subController.subscriptionsRemove);
-routerSub.delete("/remove-follower", auth, subController.removeFollower);
+subRouter.post("/subscribe", auth, subController.subscriptionAdd);
+subRouter.get("/follower", auth, subController.followerGet);
+subRouter.get("/subscriptions", auth, subController.subscriptionsGet);
+subRouter.delete("/unsubscribe", auth, subController.subscriptionsRemove);
+subRouter.delete("/remove-follower", auth, subController.removeFollower);
 
-export default routerSub;
+export default subRouter;
 
