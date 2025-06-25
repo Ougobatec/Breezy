@@ -1,0 +1,36 @@
+# Fichiers système / IDE
+.DS_Store
+Thumbs.db
+*.log
+*.env
+*.env.local
+*.env.development
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Node modules
+node_modules
+**/node_modules
+
+# Fichiers de build
+/build
+/.next
+/out
+/dist
+coverage
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Autres fichiers inutiles
+*.swp
+*.swo
+.vscode
+.idea
+*.tgz
