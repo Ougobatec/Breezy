@@ -33,28 +33,28 @@ export default function ProfilePage() {
             .catch(() => setForm({ name: user?.name || "", bio: "" }));
     }, [token, user?.name]);
 
-    // Récupérer les posts de l'utilisateur (filtrage côté client si besoin)
+    // Récupération des posts (filtrage côté client si besoin, fallback si l'API ne supporte pas userId)
     useEffect(() => {
-        const fetchPosts = async () => {
-            if (!token || !user) return;
-            setPostsLoading(true);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-                const data = await res.json();
-                // Filtrer côté client pour ne garder que les posts de l'utilisateur connecté
-                const userPosts = Array.isArray(data)
-                    ? data.filter((post) => post.user_id === user._id || post.user_id?._id === user._id)
-                    : [];
-                setPosts(userPosts);
-            } else {
-                setPosts([]);
-            }
-            setPostsLoading(false);
-        };
-        fetchPosts();
-    }, [token, user?._id]);
+        if (!user || !token) return;
+        setPostsLoading(true);
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts?userId=${user._id || user.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                // Si l'API renvoie tous les posts, filtrer côté client
+                let postsArray = data.posts || data || [];
+                if (Array.isArray(postsArray) && postsArray.length > 0 && postsArray[0].user_id) {
+                    postsArray = postsArray.filter((post) =>
+                        (typeof post.user_id === "string" && post.user_id === (user._id || user.id)) ||
+                        (typeof post.user_id === "object" && post.user_id?._id === (user._id || user.id))
+                    );
+                }
+                setPosts(postsArray);
+            })
+            .catch(() => setPosts([]))
+            .finally(() => setPostsLoading(false));
+    }, [user, token]);
 
     // Gestion avatar
     const handleAvatarChange = e => {
