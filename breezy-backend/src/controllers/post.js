@@ -5,35 +5,8 @@ const postController = {
     createPost: async (req, res) => {
         try {
             const { content } = req.body;
-            let { tags } = req.body;
             const userId = req.user.userId;
-            
-            // Parser les tags si ils sont en string JSON
-            if (typeof tags === 'string') {
-                try {
-                    tags = JSON.parse(tags);
-                } catch (e) {
-                    tags = [];
-                }
-            }
-            
-            // Nettoyer et valider les tags
-            let cleanTags = [];
-            if (tags && Array.isArray(tags)) {
-                cleanTags = tags
-                    .filter(tag => tag && typeof tag === 'string')
-                    .map(tag => tag.trim().toLowerCase().replace('#', ''))
-                    .filter(tag => tag.length > 0 && tag.length <= 50);
-                // Supprimer les doublons
-                cleanTags = [...new Set(cleanTags)];
-            }
-            
-            const post = new PostModel({ 
-                content, 
-                user_id: userId,
-                tags: cleanTags
-            });
-            
+            const post = new PostModel({ content, user_id: userId });
             await post.save();
             res.status(201).json({ message: "Post créé avec succès", post });
         } catch (error) {
