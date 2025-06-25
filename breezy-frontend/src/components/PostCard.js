@@ -3,10 +3,12 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
+import Comments from "@/components/Comments";
 
 export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
+    const [showComments, setShowComments] = useState(false);
 
     const postId = post._id || post.id;
     const isLiked =
@@ -37,7 +39,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
     };
 
     return (
-        <div className="rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="relative rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
             {/* En-tête */}
             <div className="flex items-center p-3.5">
                 {post.user_id?.avatar ? (
@@ -121,8 +123,8 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
                     disabled={isLiking}
                 />
                 <IconButton
-                    href={`/posts/${postId}/comments`}
-                    icon="comment.svg"
+                    onClick={() => setShowComments((v) => !v)}
+                    icon={showComments ? "comment-active.svg" : "comment.svg"}
                     alt="Comment"
                     size={24}
                     className="p-1"
@@ -133,6 +135,30 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate }) {
                     alt="Share"
                     size={24}
                     className="p-1"
+                />
+            </div>
+
+            {/* Drawer des commentaires : slide up depuis sous la carte */}
+           <div
+                className={`fixed left-0 right-0 bottom-0 z-[100] transition-transform duration-300 ${
+                    showComments ? "translate-y-0" : "translate-y-full pointer-events-none"
+                }`}
+                style={{
+                    background: "var(--card)",
+                    borderTopLeftRadius: "1rem",
+                    borderTopRightRadius: "1rem",
+                    boxShadow: "0 -2px 16px #0002",
+                    maxHeight: "70vh",
+                    minHeight: "40vh",
+                    overflowY: "auto",
+                }}
+            >
+                
+                <Comments
+                    postId={postId}
+                    token={token}
+                    user={currentUser}
+                    onClose={() => setShowComments(false)}
                 />
             </div>
         </div>
