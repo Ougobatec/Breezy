@@ -251,8 +251,8 @@ export default function SearchPage() {
                         {hasSearched && searchResults.users.length === 0 && searchResults.posts.length === 0 && (
                             <div className="text-center py-12 text-gray-500">
                                 <div className="text-6xl mb-4">😞</div>
-                                <p>Aucun résultat trouvé pour "{searchQuery}"</p>
-                                <p className="text-sm mt-2">Essayez avec d'autres mots-clés</p>
+                                <p>Aucun résultat trouvé pour &quot;{searchQuery}&quot;</p>
+                                <p className="text-sm mt-2">Essayez avec d&quot;autres mots-clés</p>
                             </div>
                         )}
                     </div>
