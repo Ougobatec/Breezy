@@ -115,16 +115,26 @@ export default function RegisterPage() {
                 <div className="text-2xl font-bold text-center">
                     Créer un compte
                 </div>
+                
                 <button
                     onClick={() => handleGoogleRegister()}
-                    className="bg-white border border-gray-300 rounded-lg py-2 px-4 flex items-center justify-center gap-2 hover:bg-gray-50"
                     disabled={loading}
-                    >
+                    className="w-full border rounded-lg py-3 px-4 flex items-center justify-center gap-3 font-medium transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--text-primary)"
+                    }}
+                >
                     <Image src={googlesvg} alt="Google" width={20} height={20} className="w-5 h-5" />
-                    
-                    S&apos;inscrire avec Google
+                    {loading ? "Inscription..." : "S'inscrire avec Google"}
                 </button>
-                <span className="text-center text-gray-400">ou</span>
+                
+                <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }}></div>
+                    <span className="text-sm" style={{ color: "var(--text-secondary)" }}>ou</span>
+                    <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }}></div>
+                </div>
                 <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
                     Vous avez déjà un compte ? Connectez-vous !
                 </Link>

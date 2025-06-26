@@ -13,8 +13,7 @@
   --text-action: #d52b00;
 }
 
-/* Mode sombre forcé via la classe .dark */
-.dark {
+.dark :root {
   --primary: #d52b00;
   --background: #202020;
   --card: #202020;
@@ -27,9 +26,8 @@
   --text-action: #d52b00;
 }
 
-/* Mode système : suit la préférence du navigateur */
-.system {
-  @media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
+  :root {
     --primary: #d52b00;
     --background: #202020;
     --card: #202020;

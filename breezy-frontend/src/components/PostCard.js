@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
@@ -9,6 +9,8 @@ import { useActiveVideo } from "@/context/ActiveVideoContext";
 
 export default function PostCard({ post, token, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
     const { t, language } = useLanguage();
+    
+    // États
     const { activeVideoId, setActiveVideoId } = useActiveVideo();
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
@@ -20,7 +22,10 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     const [reportReason, setReportReason] = useState("");
     const [isReporting, setIsReporting] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
+    const [commentsCount, setCommentsCount] = useState(0);
+    const [showErrorMessage, setShowErrorMessage] = useState("");
     const videoRef = useRef(null);
+    // Variables dérivées
     const postId = post._id || post.id;
 
     useEffect(() => {
@@ -77,21 +82,57 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
         };
     }, [videoRef, postId, setActiveVideoId]);
 
-    const isLiked =
-        Array.isArray(post.likes) && currentUser
-            ? post.likes.includes(currentUser.id) || post.likes.includes(currentUser._id)
-            : false;
+    // Récupérer le nombre de commentaires
+    useEffect(() => {
+        const fetchCommentsCount = async () => {
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/comments/${postId}/comments`,
+                    { credentials: "include" }
+                );
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    // Compter tous les commentaires + leurs réponses
+                    const totalCount = data.reduce((total, comment) => {
+                        return total + 1 + (comment.replies ? comment.replies.length : 0);
+                    }, 0);
+                    setCommentsCount(totalCount);
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement des commentaires:", error);
+            }
+        };
+        
+        fetchCommentsCount();
+    }, [postId]);
 
-    const handleLike = async () => {
+    const isLiked = Array.isArray(post.likes) && currentUser
+        ? post.likes.includes(currentUser.id) || post.likes.includes(currentUser._id)
+        : false;
+    
+    const canDeletePost = currentUser && post.user_id && (
+        currentUser.id === post.user_id?._id || 
+        currentUser._id === post.user_id?._id ||
+        currentUser.id === post.user_id ||
+        currentUser._id === post.user_id ||
+        (showDeleteOption && (currentUser.role === 'moderator' || currentUser.role === 'admin'))
+    );
+
+    const isOwnPost = currentUser && (
+        currentUser.id === post.user_id?._id || 
+        currentUser._id === post.user_id?._id ||
+        currentUser.id === post.user_id ||
+        currentUser._id === post.user_id
+    );
+
+    // Gestion des likes
+    const handleLike = useCallback(async () => {
         if (isLiking) return;
         setIsLiking(true);
         try {
-            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}/like`;
-            const response = await fetch(url, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}/like`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 credentials: "include",
             });
             const data = await response.json();
@@ -100,18 +141,20 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 setPop(true);
                 setTimeout(() => setPop(false), 300);
             }
-        } catch { }
-        setIsLiking(false);
-    };
+        } catch (error) {
+            console.error("Erreur lors du like:", error);
+        } finally {
+            setIsLiking(false);
+        }
+    }, [isLiking, postId, onLikeUpdate]);
 
-    const handleDeletePost = async () => {
+    // Suppression du post
+    const handleDeletePost = useCallback(async () => {
         if (isDeleting) return;
-        if (!window.confirm(t('deletePostConfirm'))) return;
         
         setIsDeleting(true);
         try {
-            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
-            const response = await fetch(url, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`, {
                 method: "DELETE",
                 credentials: "include",
             });
@@ -119,28 +162,87 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             if (response.ok && onDeletePost) {
                 onDeletePost(postId);
             } else {
-                alert(t('deleteError'));
+                setShowErrorMessage(t('deleteError') || 'Erreur lors de la suppression');
+                setTimeout(() => setShowErrorMessage(""), 3000);
             }
         } catch (error) {
-            alert(t('deleteError'));
+            setShowErrorMessage(t('deleteError') || 'Erreur lors de la suppression');
+            setTimeout(() => setShowErrorMessage(""), 3000);
+        } finally {
+            setIsDeleting(false);
+            setShowMenu(false);
         }
-        setIsDeleting(false);
-        setShowMenu(false);
-    };
+    }, [isDeleting, postId, onDeletePost, t]);
 
-    const toggleMenu = () => {
-        setShowMenu(!showMenu);
-    };
-
-    const handleShare = () => {
+    // Partage
+    const handleShare = useCallback(() => {
         setShowShareMessage(true);
-        // Faire disparaître le message après 3 secondes
-        setTimeout(() => {
-            setShowShareMessage(false);
-        }, 3000);
-    };
+        setTimeout(() => setShowShareMessage(false), 3000);
+    }, []);
 
-    // Fermer le menu si on clique ailleurs
+    // Signalement
+    const handleReportPost = useCallback(() => {
+        setShowReportDialog(true);
+        setShowMenu(false);
+    }, []);
+
+    const submitReport = useCallback(async () => {
+        if (!reportReason.trim()) {
+            setShowErrorMessage('Veuillez sélectionner une raison pour le signalement');
+            setTimeout(() => setShowErrorMessage(""), 3000);
+            return;
+        }
+
+        setIsReporting(true);
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}/report`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ reason: reportReason })
+            });
+            
+            if (response.ok) {
+                setShowReportDialog(false);
+                setReportReason("");
+            } else {
+                const data = await response.json();
+                setShowErrorMessage(data.message || t('reportError') || 'Erreur lors du signalement');
+                setTimeout(() => setShowErrorMessage(""), 3000);
+            }
+        } catch (error) {
+            setShowErrorMessage(t('reportError') || 'Erreur lors du signalement');
+            setTimeout(() => setShowErrorMessage(""), 3000);
+        } finally {
+            setIsReporting(false);
+        }
+    }, [reportReason, postId, t]);
+
+    // Fonction pour rafraîchir le compteur de commentaires
+    const refreshCommentsCount = useCallback(async () => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/comments/${postId}/comments`,
+                { credentials: "include" }
+            );
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                const totalCount = data.reduce((total, comment) => {
+                    return total + 1 + (comment.replies ? comment.replies.length : 0);
+                }, 0);
+                setCommentsCount(totalCount);
+            }
+        } catch (error) {
+            console.error("Erreur lors du rafraîchissement des commentaires:", error);
+        }
+    }, [postId]);
+
+    // Gestion du menu
+    const toggleMenu = useCallback(() => {
+        setShowMenu(!showMenu);
+    }, [showMenu]);
+
+    // Effet pour fermer le menu
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (!e.target.closest('.post-menu')) {
@@ -150,99 +252,69 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
         
         if (showMenu) {
             document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
         }
-        
-        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showMenu]);
 
-    // Vérifier si l'utilisateur actuel peut supprimer ce post
-    const canDeletePost = currentUser && post.user_id && (
-        // Propriétaire du post
-        currentUser.id === post.user_id?._id || 
-        currentUser._id === post.user_id?._id ||
-        currentUser.id === post.user_id ||
-        currentUser._id === post.user_id ||
-        // Modérateur ou admin (si showDeleteOption est activé)
-        (showDeleteOption && (currentUser.role === 'moderator' || currentUser.role === 'admin'))
-    );
-
-    const handleReportPost = () => {
-        setShowReportDialog(true);
-        setShowMenu(false);
-    };
-
-    const submitReport = async () => {
-        if (!reportReason.trim()) {
-            alert('Veuillez sélectionner une raison pour le signalement');
-            return;
-        }
-
-        setIsReporting(true);
-        try {
-            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}/report`;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({ reason: reportReason })
-            });
-            
-            if (response.ok) {
-                alert(t('reportSuccess') || 'Post signalé avec succès');
-                setShowReportDialog(false);
-                setReportReason("");
-            } else {
-                const data = await response.json();
-                alert(data.message || t('reportError') || 'Erreur lors du signalement');
-            }
-        } catch (error) {
-            alert(t('reportError') || 'Erreur lors du signalement');
-        }
-        setIsReporting(false);
-    };
-
     return (
-        <div className="relative rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-            {/* En-tête */}
-            <div className="flex items-center p-3.5">
-                {post.user_id?.avatar ? (
-                    <Image
-                        src={post.user_id.avatar.startsWith("http") ? post.user_id.avatar : `${process.env.NEXT_PUBLIC_BACKEND_URL}${post.user_id.avatar}`}
-                        alt="Avatar"
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-full mr-2 object-cover"
-                    />
-                ) : (
-                    <div className="w-10 h-10 rounded-full mr-2 flex items-center justify-center" style={{ backgroundColor: "var(--input)" }}>
+        <div className="relative rounded-xl overflow-hidden border" 
+             style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+            
+            {/* En-tête du post */}
+            <div className="flex items-center p-4">
+                {/* Avatar */}
+                <div className="flex-shrink-0 mr-3">
+                    {post.user_id?.avatar ? (
                         <Image
-                            src="/avatar.svg"
-                            alt="Avatar temporaire"
+                            src={post.user_id.avatar.startsWith("http") 
+                                ? post.user_id.avatar 
+                                : `${process.env.NEXT_PUBLIC_BACKEND_URL}${post.user_id.avatar}`}
+                            alt="Avatar"
                             width={40}
                             height={40}
-                            className="w-6 h-6 rounded-full object-cover"
+                            className="w-10 h-10 rounded-full object-cover"
                         />
-                    </div>
-                )}
-                <div className="flex flex-col flex-1 gap-0.5">
+                    ) : (
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center" 
+                             style={{ backgroundColor: "var(--input)" }}>
+                            <Image
+                                src="/avatar.svg"
+                                alt="Avatar"
+                                width={24}
+                                height={24}
+                                className="w-6 h-6"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Informations utilisateur */}
+                <div className="flex-1 min-w-0">
                     {post.user_id?._id ? (
-                        <Link href={`/users/${post.user_id._id}`} className="flex items-center gap-1 font-semibold text-sm">
-                            <span>{post.user_id?.name || "Utilisateur"}</span>
-                            <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        <Link href={`/users/${post.user_id._id}`} 
+                              className="flex items-center gap-2 hover:opacity-80">
+                            <span className="font-semibold text-sm truncate" 
+                                  style={{ color: "var(--text-primary)" }}>
+                                {post.user_id?.name || "Utilisateur"}
+                            </span>
+                            <span className="text-xs flex-shrink-0" 
+                                  style={{ color: "var(--text-secondary)" }}>
                                 @{post.user_id?.username || "unknown"}
                             </span>
                         </Link>
                     ) : (
-                        <div className="flex items-center gap-1 font-semibold text-sm">
-                            <span>{post.user_id?.name || "Utilisateur inconnu"}</span>
-                            <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm" 
+                                  style={{ color: "var(--text-primary)" }}>
+                                {post.user_id?.name || "Utilisateur inconnu"}
+                            </span>
+                            <span className="text-xs" 
+                                  style={{ color: "var(--text-secondary)" }}>
                                 @{post.user_id?.username || "unknown"}
                             </span>
                         </div>
                     )}
-                    <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
                         {post.created_at
                             ? new Date(post.created_at).toLocaleString(language === 'fr' ? "fr-FR" : "en-US", {
                                 hour: "2-digit",
@@ -254,51 +326,48 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                             : t('unknownDate')}
                     </div>
                 </div>
-                <div className="relative post-menu">
-                    <IconButton 
-                        icon="dots.svg" 
-                        alt="Options" 
-                        size={24} 
-                        className="p-1"
-                        onClick={currentUser ? toggleMenu : undefined}
-                        style={{ cursor: currentUser ? 'pointer' : 'default' }}
-                    />
-                    {showMenu && currentUser && (
-                        <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow z-10" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-                            {canDeletePost && (
-                                <button
-                                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-800 text-sm border-b"
-                                    style={{ borderColor: "var(--border)" }}
-                                    onClick={handleDeletePost}
-                                    disabled={isDeleting}
-                                >
-                                    {isDeleting ? `${t('delete')}...` : t('delete')}
-                                </button>
-                            )}
-                            {/* Option de signalement pour tous les utilisateurs connectés (sauf sur leurs propres posts) */}
-                            {!(currentUser.id === post.user_id?._id || 
-                               currentUser._id === post.user_id?._id ||
-                               currentUser.id === post.user_id ||
-                               currentUser._id === post.user_id) && (
-                                <button
-                                    className="w-full text-left px-4 py-2 text-orange-600 hover:bg-orange-50 hover:text-orange-800 text-sm"
-                                    onClick={handleReportPost}
-                                >
-                                    🚨 {t('report') || 'Signaler'}
-                                </button>
-                            )}
-                            {/* Si l'utilisateur ne peut ni supprimer ni signaler, afficher un message */}
-                            {!canDeletePost && (currentUser.id === post.user_id?._id || 
-                                                currentUser._id === post.user_id?._id ||
-                                                currentUser.id === post.user_id ||
-                                                currentUser._id === post.user_id) && (
-                                <div className="px-4 py-2 text-sm text-gray-500 text-center">
-                                    Votre post
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+
+                {/* Menu d'options */}
+                {currentUser && (
+                    <div className="relative post-menu">
+                        <IconButton 
+                            icon="dots.svg" 
+                            alt="Options" 
+                            size={20} 
+                            className="p-2 hover:opacity-70"
+                            onClick={toggleMenu}
+                        />
+                        {showMenu && (
+                            <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg z-10 border"
+                                 style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+                                {canDeletePost && (
+                                    <button
+                                        className="w-full text-left px-4 py-3 text-red-600 hover:opacity-80 text-sm border-b"
+                                        style={{ borderColor: "var(--border)" }}
+                                        onClick={handleDeletePost}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? `${t('delete')}...` : `🗑️ ${t('delete')}`}
+                                    </button>
+                                )}
+                                {!isOwnPost && (
+                                    <button
+                                        className="w-full text-left px-4 py-3 text-orange-600 hover:opacity-80 text-sm"
+                                        onClick={handleReportPost}
+                                    >
+                                        🚨 {t('report') || 'Signaler'}
+                                    </button>
+                                )}
+                                {isOwnPost && !canDeletePost && (
+                                    <div className="px-4 py-3 text-sm text-center" 
+                                         style={{ color: "var(--text-secondary)" }}>
+                                        Votre post
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Image ou vidéo du post */}
@@ -333,127 +402,155 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                         </div>
                     </div>
                 ) : (
-                    <Image
-                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
-                    alt="post"
-                    className="w-full aspect-[1/1] object-cover mb-2"
-                    width={600}
-                    height={600}
-                    unoptimized
-                    />
+                    <div className="w-full">
+                        <Image
+                            src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
+                            alt="Post"
+                            className="w-full aspect-square object-cover"
+                            width={600}
+                            height={600}
+                            unoptimized
+                        />
+                    </div>
                 )
             )}
 
-            {/* Contenu */}
-            <div className="flex flex-col gap-2 px-2 text-sm">
-                <p className="px-1.5 break-words whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                    {post.content}
-                </p>
+            {/* Contenu du post */}
+            <div className="p-3 pt-2">
+                {post.content && (
+                    <p className="text-sm mb-2 whitespace-pre-line break-words" 
+                       style={{ color: "var(--text-primary)" }}>
+                        {post.content}
+                    </p>
+                )}
+                
+                {/* Tags */}
                 {post.tags?.length > 0 && (
-                    <div className="flex gap-1 flex-wrap text-xs" style={{ color: "var(--text-secondary)" }}>
+                    <div className="flex gap-2 flex-wrap mb-2">
                         {post.tags.map((tag, i) => (
-                            <span key={i} className="border rounded-full px-2 py-1" style={{ borderColor: "var(--border)" }}>
+                            <span key={i} 
+                                  className="text-xs px-2 py-1 rounded-full border"
+                                  style={{ 
+                                      borderColor: "var(--border)", 
+                                      color: "var(--text-secondary)",
+                                      backgroundColor: "var(--input)"
+                                  }}>
                                 #{tag}
                             </span>
                         ))}
                     </div>
                 )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-1">
+                    {/* Like */}
+                    <IconButton
+                        icon="like.svg"
+                        activeIcon="like-active.svg"
+                        alt="Like"
+                        size={24}
+                        className={`p-1${pop ? " pop-animation" : ""}`}
+                        onClick={handleLike}
+                        isActive={isLiked}
+                        disabled={isLiking}
+                    />
+                    <span className="text-xs mr-3" style={{ color: "var(--text-secondary)" }}>
+                        {Array.isArray(post.likes) ? post.likes.length : 0}
+                    </span>
+                    
+                    {/* Comment */}
+                    <IconButton
+                        onClick={() => setShowComments(!showComments)}
+                        icon={showComments ? "comment-active.svg" : "comment.svg"}
+                        alt="Comment"
+                        size={24}
+                        className="p-1"
+                    />
+                    <span className="text-xs mr-3" style={{ color: "var(--text-secondary)" }}>
+                        {commentsCount}
+                    </span>
+                    
+                    {/* Share */}
+                    <IconButton
+                        onClick={handleShare}
+                        icon="share.svg"
+                        alt="Share"
+                        size={24}
+                        className="p-1"
+                    />
+                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        0
+                    </span>
+                </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center p-2">
-                <IconButton
-                    icon="like.svg"
-                    activeIcon="like-active.svg"
-                    alt="Like"
-                    size={24}
-                    className={`p-1${pop ? " pop-animation" : ""}`}
-                    onClick={handleLike}
-                    isActive={isLiked}
-                    disabled={isLiking}
-                />
-                <IconButton
-                    onClick={() => setShowComments((v) => !v)}
-                    icon={showComments ? "comment-active.svg" : "comment.svg"}
-                    alt="Comment"
-                    size={24}
-                    className="p-1"
-                />
-                <IconButton
-                    onClick={handleShare}
-                    icon="share.svg"
-                    alt="Share"
-                    size={24}
-                    className="p-1"
-                />
-            </div>
-
-            {/* Message temporaire pour le partage */}
-            {showShareMessage && (
-                <div 
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm z-50 cursor-pointer"
-                    onClick={() => setShowShareMessage(false)}
-                >
-                    Cette fonctionnalité n&apos;est pas disponible pour le moment
+            {/* Message d'erreur */}
+            {showErrorMessage && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+                    <div className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm cursor-pointer max-w-xs text-center"
+                         onClick={() => setShowErrorMessage("")}>
+                        {showErrorMessage}
+                    </div>
                 </div>
             )}
 
-            {/* Drawer des commentaires : slide up depuis sous la carte */}
-           <div
-                className={`fixed left-0 right-0 bottom-0 z-[100] transition-transform duration-200 ${
-                    showComments ? "translate-y-0" : "translate-y-full pointer-events-none"
-                }`}
-                style={{
-                    background: "var(--card)",
-                    borderTopLeftRadius: "1rem",
-                    borderTopRightRadius: "1rem",
-                    boxShadow: "0 -2px 16px #0002",
-                    maxHeight: "70vh",
-                    minHeight: "10vh",
-                    overflowY: "auto",
-                }}
-            >
-                
+            {/* Message temporaire pour le partage */}
+            {showShareMessage && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+                    <div className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm cursor-pointer"
+                         onClick={() => setShowShareMessage(false)}>
+                        Cette fonctionnalité n&apos;est pas disponible pour le moment
+                    </div>
+                </div>
+            )}
+
+            {/* Commentaires */}
+            {showComments && (
                 <Comments
                     postId={postId}
                     token={token}
                     user={currentUser}
-                    onClose={() => setShowComments(false)}
+                    onClose={() => {
+                        setShowComments(false);
+                        refreshCommentsCount();
+                    }}
                 />
-            </div>
+            )}
 
             {/* Dialog de signalement */}
             {showReportDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] p-4">
-                    <div 
-                        className="bg-white rounded-lg p-6 w-full max-w-md"
-                        style={{ backgroundColor: "var(--card)", color: "var(--text-primary)" }}
-                    >
-                        <h3 className="text-lg font-semibold mb-4">Signaler ce post</h3>
+                    <div className="w-full max-w-md rounded-xl p-6 border"
+                         style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+                        <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+                            Signaler ce post
+                        </h3>
                         <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
                             Pourquoi signalez-vous ce post ?
                         </p>
                         
-                        <div className="space-y-2 mb-6">
+                        <div className="space-y-3 mb-6">
                             {[
-                                { value: "Contenu inapproprié", label: "Contenu inapproprié" },
-                                { value: "Spam", label: "Spam ou contenu commercial" },
-                                { value: "Harcèlement", label: "Harcèlement ou intimidation" },
-                                { value: "Discours de haine", label: "Discours de haine" },
-                                { value: "Violence", label: "Violence ou contenu violent" },
-                                { value: "Désinformation", label: "Fausses informations" },
-                                { value: "Autre", label: "Autre raison" }
+                                "Contenu inapproprié",
+                                "Spam ou contenu commercial", 
+                                "Harcèlement ou intimidation",
+                                "Discours de haine",
+                                "Violence ou contenu violent",
+                                "Fausses informations",
+                                "Autre raison"
                             ].map((reason) => (
-                                <label key={reason.value} className="flex items-center space-x-2 cursor-pointer">
+                                <label key={reason} className="flex items-center space-x-3 cursor-pointer">
                                     <input
                                         type="radio"
                                         name="reportReason"
-                                        value={reason.value}
-                                        checked={reportReason === reason.value}
+                                        value={reason}
+                                        checked={reportReason === reason}
                                         onChange={(e) => setReportReason(e.target.value)}
-                                        className="text-red-500"
+                                        style={{ accentColor: "var(--primary)" }}
                                     />
-                                    <span className="text-sm">{reason.label}</span>
+                                    <span className="text-sm" style={{ color: "var(--text-primary)" }}>
+                                        {reason}
+                                    </span>
                                 </label>
                             ))}
                         </div>
@@ -464,8 +561,12 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                                     setShowReportDialog(false);
                                     setReportReason("");
                                 }}
-                                className="px-4 py-2 text-sm border rounded hover:bg-gray-50"
-                                style={{ borderColor: "var(--border)" }}
+                                className="px-4 py-2 text-sm rounded-xl border hover:opacity-80"
+                                style={{ 
+                                    borderColor: "var(--border)",
+                                    backgroundColor: "var(--card)",
+                                    color: "var(--text-primary)"
+                                }}
                                 disabled={isReporting}
                             >
                                 Annuler
@@ -473,7 +574,8 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                             <button
                                 onClick={submitReport}
                                 disabled={!reportReason.trim() || isReporting}
-                                className="px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 text-sm text-white rounded-xl hover:opacity-80 disabled:opacity-50"
+                                style={{ backgroundColor: "var(--primary)" }}
                             >
                                 {isReporting ? 'Signalement...' : 'Signaler'}
                             </button>

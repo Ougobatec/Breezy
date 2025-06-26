@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import LoadingScreen from "@/components/LoadingScreen";
 import Layout from "@/components/Layout";
-import SkeletonAvatar from "@/components/SkeletonAvatar";
+import Avatar from "@/components/Avatar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,7 @@ export default function FollowersPage() {
   const router = useRouter();
   const [followers, setFollowers] = useState([]);
   const [followersLoading, setFollowersLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (loading || !user) return;
@@ -62,40 +63,69 @@ export default function FollowersPage() {
     }
   };
 
+  // Filtrer les followers selon la recherche
+  const filteredFollowers = followers.filter((f) => {
+    if (!searchQuery) return true;
+    const name = f.name || f.username || "";
+    const username = f.username || "";
+    return name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           username.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   if (loading) return <LoadingScreen text={t('loading')} />;
   if (!user) return null;
   if (followersLoading) return <LoadingScreen text={t('loadingFollowers')} />;
 
   return (
-
-      <Layout headerProps={{ title: t('followers') }}>
-      <div className="px-4 py-2">
+    <Layout headerProps={{ title: t('followers') }}>
+      <div className="p-4">
+        {/* Barre de recherche */}
         <input
           type="text"
           placeholder={t('search')}
-          className="w-full mb-4 rounded-xl bg-gray-100 px-4 py-2 text-gray-500 outline-none"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full mb-4 rounded-xl border px-4 py-3 text-sm outline-none"
+          style={{ 
+            backgroundColor: "var(--input)", 
+            borderColor: "var(--border)",
+            color: "var(--text-primary)"
+          }}
         />
+        
+        {/* Liste des followers */}
         <div className="space-y-3">
-          {followers.length === 0 ? (
-            <div className="text-center text-gray-400">{t('noFollowers')}</div>
+          {filteredFollowers.length === 0 ? (
+            <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>
+              {searchQuery ? t('noSearchResults') : t('noFollowers')}
+            </div>
           ) : (
-            followers.map((f, idx) => (
+            filteredFollowers.map((f, idx) => (
               <div
                 key={f._id || idx}
-                className="flex items-center bg-white rounded-xl shadow p-3"
+                className="flex items-center rounded-xl overflow-hidden border p-4 hover:opacity-80 cursor-pointer"
+                style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                onClick={() => router.push(`/users/${f._id || f.id}`)}
               >
-                <SkeletonAvatar />
-                <div className="ml-4 flex-1">
-                  <div className="font-medium text-gray-700">
-                    {f.name || f.username || "Nom"}{" "}
-                    <span className="text-gray-400">
-                      @{f.username || "username"}
-                    </span>
+                <Avatar user={f} size={48} />
+                <div className="ml-3 flex-1">
+                  <div className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+                    {f.name || f.username || "Nom"}
+                  </div>
+                  <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    @{f.username || "username"}
                   </div>
                 </div>
-                <button onClick={() => handleRemoveFollower(f._id || f.id)}>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveFollower(f._id || f.id);
+                  }}
+                  className="ml-2 p-2 hover:opacity-70"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   <svg
-                    className="w-6 h-6 text-gray-500"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
@@ -113,23 +143,33 @@ export default function FollowersPage() {
           )}
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 w-full">
-        <div className="flex bg-white rounded-t-xl shadow">
+      
+      {/* Navigation en bas */}
+      <div className="fixed bottom-0 left-0 w-full" style={{ backgroundColor: "var(--background)" }}>
+        <div className="flex rounded-t-xl overflow-hidden border-t" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <button 
-            className="flex-1 py-3 font-semibold text-orange-600 bg-gray-100 rounded-tl-xl"
+            className="flex-1 py-4 font-semibold text-sm rounded-tl-xl"
+            style={{ 
+              backgroundColor: "var(--primary)", 
+              color: "white"
+            }}
             onClick={() => router.push('/followers')}
           >
             {t('followers')}
           </button>
           <button 
-            className="flex-1 py-3 text-gray-500"
+            className="flex-1 py-4 text-sm"
+            style={{ 
+              backgroundColor: "var(--card)",
+              color: "var(--text-secondary)"
+            }}
             onClick={() => router.push('/subscription')}
           >
             {t('following')}
           </button>
         </div>
-        </div>
-        </Layout >
+      </div>
+    </Layout>
 
 
   );

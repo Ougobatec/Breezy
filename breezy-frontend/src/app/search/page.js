@@ -1,24 +1,27 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../context/AuthContext";
-import Layout from "../../components/Layout";
-import LoadingScreen from "../../components/LoadingScreen";
-import PostCard from "../../components/PostCard";
-import SkeletonAvatar from "../../components/SkeletonAvatar";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import LoadingScreen from "@/components/LoadingScreen";
+import Layout from "@/components/Layout";
+import PostCard from "@/components/PostCard";
+import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SearchPage() {
     const { user, token, loading } = useAuth();
+    const { t } = useLanguage();
+    const router = useRouter();
+    
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState({
         users: [],
         posts: []
     });
     const [searchLoading, setSearchLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState("all"); // all, users, posts, mentions
+    const [activeTab, setActiveTab] = useState("all"); // all, users, posts, tags
     const [hasSearched, setHasSearched] = useState(false);
-    const router = useRouter();
+    const [error, setError] = useState("");
 
     // Debounce pour éviter trop de requêtes
     const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -33,7 +36,6 @@ export default function SearchPage() {
 
     // Fonction de recherche
     const performSearch = useCallback(async (query, type = "all") => {
-        console.log("Recherche en cours pour :", query, "Type :", type);
         if (!query || query.trim().length < 2) {
             setSearchResults({ users: [], posts: [] });
             setHasSearched(false);
@@ -41,9 +43,10 @@ export default function SearchPage() {
         }
 
         setSearchLoading(true);
+        setError("");
         try {
-            const endpoint = type === "mentions" 
-                ? `/search/mentions?query=${encodeURIComponent(query)}`
+            const endpoint = type === "tags" 
+                ? `/search/tags?query=${encodeURIComponent(query)}`
                 : type === "users"
                     ? `/search/users?query=${encodeURIComponent(query)}`
                     : `/search?query=${encodeURIComponent(query)}&type=${type}`;
@@ -59,10 +62,10 @@ export default function SearchPage() {
             
             const data = await res.json();
             
-            if (type === "users" || type === "mentions") {
+            if (type === "users" || type === "tags") {
                 setSearchResults({
                     users: type === "users" ? data : [],
-                    posts: type === "mentions" ? data : []
+                    posts: type === "tags" ? data : []
                 });
             } else {
                 setSearchResults({
@@ -73,10 +76,11 @@ export default function SearchPage() {
             
             setHasSearched(true);
         } catch (error) {
-            console.error("Erreur de recherche:", error);
+            setError("Impossible d'effectuer la recherche");
             setSearchResults({ users: [], posts: [] });
+        } finally {
+            setSearchLoading(false);
         }
-        setSearchLoading(false);
     }, []);
 
     // Recherche immédiate (appelée par Entrée ou bouton)
@@ -94,7 +98,7 @@ export default function SearchPage() {
         }
     };
 
-    // Effectuer la recherche quand la query debounced change (seulement si pas de recherche manuelle récente)
+    // Effectuer la recherche quand la query debounced change
     useEffect(() => {
         if (debouncedQuery) {
             performSearch(debouncedQuery, activeTab);
@@ -117,26 +121,46 @@ export default function SearchPage() {
         router.push(`/users/${userId}`);
     };
 
-    if (loading) return <LoadingScreen text="Connexion en cours..." />;
+    // Rendu conditionnel
     if (!user) return null;
+    if (loading) return <LoadingScreen text={t('loading')} />;
 
     return (
-        <Layout headerProps={{ title: "Recherche" }}>
-            <div className="p-4 space-y-4">
+        <Layout headerProps={{ title: t('search') }}>
+            <div className="p-4">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+                        {t('search')}
+                    </h1>
+                </div>
+
+                {error && (
+                    <div className="mb-4 p-3 rounded-xl text-sm text-red-600" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
+                        {error}
+                    </div>
+                )}
+
                 {/* Barre de recherche */}
-                <div className="relative flex gap-2">
+                <div className="relative flex gap-2 mb-6">
                     <div className="relative flex-1">
                         <input
                             type="text"
-                            placeholder="Rechercher des utilisateurs ou du contenu... (Entrée pour rechercher)"
+                            placeholder={t('searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            className="w-full px-4 py-3 bg-gray-100 rounded-xl text-gray-700 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all"
+                            className="w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2"
+                            style={{
+                                backgroundColor: "var(--input)",
+                                borderColor: "var(--border)",
+                                color: "var(--text-primary)",
+                                borderWidth: "1px"
+                            }}
                         />
                         {searchLoading && (
                             <div className="absolute right-3 top-3">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: "var(--primary)" }}></div>
                             </div>
                         )}
                     </div>
@@ -145,77 +169,149 @@ export default function SearchPage() {
                     <button
                         onClick={handleImmediateSearch}
                         disabled={searchLoading || !searchQuery || searchQuery.trim().length < 2}
-                        className="px-4 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center min-w-[52px]"
+                        className="px-4 py-3 rounded-xl text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[52px]"
+                        style={{ backgroundColor: "var(--primary)" }}
                     >
                         {searchLoading ? (
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                         ) : (
-                            <span className="text-xl">🔍</span>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
                         )}
                     </button>
                 </div>
 
-                {/* Indicateur de recherche automatique */}
-                {searchQuery && searchQuery.trim().length >= 2 && !searchLoading && (
-                    <div className="text-xs text-gray-500 text-center">
-                        Recherche automatique dans {Math.max(0, 300 - (Date.now() % 300))}ms ou appuyez sur Entrée
-                    </div>
-                )}
-
-                {/* Onglets de filtre */}
-                <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
-                {[
-                        { key: "all", label: "Tout" },
-                        { key: "users", label: "Utilisateurs" },
-                        { key: "posts", label: "Posts" },
-                        { key: "mentions", label: "Mentions" }
-                    ].map((tab) => (
-                        <button
-                            key={tab.key}
-                            onClick={() => handleTabChange(tab.key)}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                                activeTab === tab.key
-                                    ? "bg-white text-blue-600 shadow-sm"
-                                    : "text-gray-600 hover:text-gray-800"
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                {/* Filtres */}
+                <div className="flex gap-2 mb-6 overflow-x-auto">
+                    <button
+                        onClick={() => handleTabChange('all')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap ${
+                            activeTab === 'all'
+                                ? 'text-white'
+                                : 'border'
+                        }`}
+                        style={{
+                            backgroundColor: activeTab === 'all' ? 'var(--primary)' : 'var(--card)',
+                            borderColor: activeTab === 'all' ? 'var(--primary)' : 'var(--border)',
+                            color: activeTab === 'all' ? 'white' : 'var(--text-primary)'
+                        }}
+                    >
+                        {t('all')}
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('users')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap ${
+                            activeTab === 'users'
+                                ? 'text-white'
+                                : 'border'
+                        }`}
+                        style={{
+                            backgroundColor: activeTab === 'users' ? 'var(--primary)' : 'var(--card)',
+                            borderColor: activeTab === 'users' ? 'var(--primary)' : 'var(--border)',
+                            color: activeTab === 'users' ? 'white' : 'var(--text-primary)'
+                        }}
+                    >
+                        {t('users')}
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('posts')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap ${
+                            activeTab === 'posts'
+                                ? 'text-white'
+                                : 'border'
+                        }`}
+                        style={{
+                            backgroundColor: activeTab === 'posts' ? 'var(--primary)' : 'var(--card)',
+                            borderColor: activeTab === 'posts' ? 'var(--primary)' : 'var(--border)',
+                            color: activeTab === 'posts' ? 'white' : 'var(--text-primary)'
+                        }}
+                    >
+                        {t('posts')}
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('tags')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap ${
+                            activeTab === 'tags'
+                                ? 'text-white'
+                                : 'border'
+                        }`}
+                        style={{
+                            backgroundColor: activeTab === 'tags' ? 'var(--primary)' : 'var(--card)',
+                            borderColor: activeTab === 'tags' ? 'var(--primary)' : 'var(--border)',
+                            color: activeTab === 'tags' ? 'white' : 'var(--text-primary)'
+                        }}
+                    >
+                        {t('tags')}
+                    </button>
                 </div>
 
                 {/* Résultats */}
                 {!hasSearched ? (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12" style={{ color: "var(--text-secondary)" }}>
                         <div className="text-6xl mb-4">🔍</div>
-                        <p>Recherchez des utilisateurs ou du contenu</p>
-                        <p className="text-sm mt-2">Tapez au moins 2 caractères et appuyez sur Entrée ou attendez 300ms</p>
+                        <p>{t('searchPrompt')}</p>
+                        <p className="text-sm mt-2">
+                            {t('searchHint')}
+                        </p>
+                        <p className="text-xs mt-1 opacity-75">
+                            {t('searchTagHint')}
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-6">
                         {/* Résultats utilisateurs */}
                         {(activeTab === "all" || activeTab === "users") && searchResults.users.length > 0 && (
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                                    Utilisateurs ({searchResults.users.length})
+                                <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+                                    {t('users')} ({searchResults.users.length})
                                 </h3>
                                 <div className="space-y-3">
                                     {searchResults.users.map((user) => (
                                         <div
                                             key={user._id}
                                             onClick={() => handleUserClick(user._id)}
-                                            className="flex items-center bg-white rounded-xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
+                                            className="flex items-start p-4 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
+                                            style={{ backgroundColor: "var(--card)" }}
                                         >
-                                            <SkeletonAvatar />
-                                            <div className="ml-4 flex-1">
-                                                <div className="font-medium text-gray-800">
+                                            {/* Avatar */}
+                                            <div className="flex-shrink-0 mr-3">
+                                                {user.avatar ? (
+                                                    <Image
+                                                        src={
+                                                            user.avatar.startsWith("http")
+                                                                ? user.avatar
+                                                                : `${process.env.NEXT_PUBLIC_BACKEND_URL}${user.avatar}`
+                                                        }
+                                                        alt="Avatar"
+                                                        width={40}
+                                                        height={40}
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                                                         style={{ backgroundColor: "var(--input)" }}>
+                                                        <Image
+                                                            src="/avatar.svg"
+                                                            alt="Avatar"
+                                                            width={24}
+                                                            height={24}
+                                                            className="w-6 h-6"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Informations utilisateur */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>
                                                     {user.name}
                                                 </div>
-                                                <div className="text-gray-500 text-sm">
+                                                <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
                                                     @{user.username}
                                                 </div>
                                                 {user.biography && (
-                                                    <div className="text-gray-600 text-sm mt-1 line-clamp-2">
+                                                    <div className="text-xs mt-1 line-clamp-2" style={{ color: "var(--text-secondary)" }}>
                                                         {user.biography}
                                                     </div>
                                                 )}
@@ -227,10 +323,12 @@ export default function SearchPage() {
                         )}
 
                         {/* Résultats posts */}
-                        {(activeTab === "all" || activeTab === "posts" || activeTab === "mentions") && searchResults.posts.length > 0 && (
+                        {(activeTab === "all" || activeTab === "posts" || activeTab === "tags") && searchResults.posts.length > 0 && (
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                                    {activeTab === "mentions" ? "Posts avec mentions" : "Posts"} ({searchResults.posts.length})
+                                <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+                                    {activeTab === "tags" 
+                                        ? t('tagsPosts') 
+                                        : t('posts')} ({searchResults.posts.length})
                                 </h3>
                                 <div className="space-y-4">
                                     {searchResults.posts.map((post) => (
@@ -249,10 +347,12 @@ export default function SearchPage() {
 
                         {/* Aucun résultat */}
                         {hasSearched && searchResults.users.length === 0 && searchResults.posts.length === 0 && (
-                            <div className="text-center py-12 text-gray-500">
+                            <div className="text-center py-12" style={{ color: "var(--text-secondary)" }}>
                                 <div className="text-6xl mb-4">😞</div>
-                                <p>Aucun résultat trouvé pour &quot;{searchQuery}&quot;</p>
-                                <p className="text-sm mt-2">Essayez avec d&quot;autres mots-clés</p>
+                                <p>{t('noResults')} &quot;{searchQuery}&quot;</p>
+                                <p className="text-sm mt-2">
+                                    {t('tryOtherKeywords')}
+                                </p>
                             </div>
                         )}
                     </div>

@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import LoadingScreen from "@/components/LoadingScreen";
 import Layout from "@/components/Layout";
-import SkeletonAvatar from "@/components/SkeletonAvatar";
+import Avatar from "@/components/Avatar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -14,8 +14,7 @@ export default function SubscriptionPage() {
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
-  const [targetId, setTargetId] = useState("");
-  const [subscribeMsg, setSubscribeMsg] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (loading || !user) return;
@@ -43,32 +42,6 @@ export default function SubscriptionPage() {
     fetchSubscriptions();
   }, [loading, user]);
 
-  const handleSubscribe = async () => {
-    if (!targetId) return;
-    try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/sub/subscribe`;
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          subscription_id: targetId,
-        }),
-      };
-
-      const res = await fetch(url, options);
-      if (!res.ok) throw new Error("Erreur lors de l'abonnement");
-
-      setSubscribeMsg("Abonnement réussi");
-      setTargetId("");
-      // Optionally, refetch subscriptions or update state
-    } catch (error) {
-      setSubscribeMsg("Erreur lors de l'abonnement");
-    }
-  };
-
   const handleUnsubscribe = async (unfollowUserId) => {
     try {
       const res = await fetch(
@@ -88,9 +61,18 @@ export default function SubscriptionPage() {
         subs.filter((s) => (s._id || s.id) !== unfollowUserId)
       );
     } catch (error) {
-      setSubscribeMsg("Erreur lors du désabonnement");
+      console.error("Erreur lors du désabonnement:", error);
     }
   };
+
+  // Filtrer les abonnements selon la recherche
+  const filteredSubscriptions = subscriptions.filter((s) => {
+    if (!searchQuery) return true;
+    const name = s.name || s.username || "";
+    const username = s.username || "";
+    return name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           username.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   if (loading) return <LoadingScreen text={t('loading')} />;
   if (!user) return null;
@@ -99,54 +81,55 @@ export default function SubscriptionPage() {
 
   return (
     <Layout headerProps={{ title: t('following') }}>
-      <div className="px-4 py-2">
-        <div className="mb-4 flex gap-2">
-          <input
-            type="text"
-            placeholder={t('userIdToFollow')}
-            value={targetId}
-            onChange={(e) => setTargetId(e.target.value)}
-            className="border px-2 py-1 rounded"
-          />
-          <button
-            onClick={handleSubscribe}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-          >
-            {t('subscribe')}
-          </button>
-          {subscribeMsg && (
-            <span className="ml-2 text-sm">{subscribeMsg}</span>
-          )}
-        </div>
+      <div className="p-4">
+        {/* Barre de recherche */}
         <input
           type="text"
           placeholder={t('search')}
-          className="w-full mb-4 rounded-xl bg-gray-100 px-4 py-2 text-gray-500 outline-none"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full mb-4 rounded-xl border px-4 py-3 text-sm outline-none"
+          style={{ 
+            backgroundColor: "var(--input)", 
+            borderColor: "var(--border)",
+            color: "var(--text-primary)"
+          }}
         />
+        
+        {/* Liste des abonnements */}
         <div className="space-y-3">
-          {subscriptions.length === 0 ? (
-            <div className="text-center text-gray-400">{t('noSubscriptions')}</div>
+          {filteredSubscriptions.length === 0 ? (
+            <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>
+              {searchQuery ? t('noSearchResults') : t('noSubscriptions')}
+            </div>
           ) : (
-            subscriptions.map((s, idx) => (
+            filteredSubscriptions.map((s, idx) => (
               <div
                 key={s._id || idx}
-                className="flex items-center bg-white rounded-xl shadow p-3"
+                className="flex items-center rounded-xl overflow-hidden border p-4 hover:opacity-80 cursor-pointer"
+                style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                onClick={() => router.push(`/users/${s._id || s.id}`)}
               >
-                <SkeletonAvatar />
-                <div className="ml-4 flex-1">
-                  <div className="font-medium text-gray-700">
-                    {s.name || s.username || "Nom"}{" "}
-                    <span className="text-gray-400">
-                      @{s.username || "username"}
-                    </span>
+                <Avatar user={s} size={48} />
+                <div className="ml-3 flex-1">
+                  <div className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+                    {s.name || s.username || "Nom"}
+                  </div>
+                  <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    @{s.username || "username"}
                   </div>
                 </div>
                 <button
-                  onClick={() => handleUnsubscribe(s._id || s.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUnsubscribe(s._id || s.id);
+                  }}
+                  className="ml-2 p-2 hover:opacity-70"
+                  style={{ color: "var(--text-secondary)" }}
                   aria-label={t('unsubscribe')}
                 >
                   <svg
-                    className="w-6 h-6 text-gray-500"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
@@ -164,16 +147,26 @@ export default function SubscriptionPage() {
           )}
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 w-full">
-        <div className="flex bg-white rounded-t-xl shadow">
+      
+      {/* Navigation en bas */}
+      <div className="fixed bottom-0 left-0 w-full" style={{ backgroundColor: "var(--background)" }}>
+        <div className="flex rounded-t-xl overflow-hidden border-t" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <button 
-            className="flex-1 py-3 text-gray-500"
+            className="flex-1 py-4 text-sm"
+            style={{ 
+              backgroundColor: "var(--card)",
+              color: "var(--text-secondary)"
+            }}
             onClick={() => router.push('/followers')}
           >
             {t('followers')}
           </button>
           <button 
-            className="flex-1 py-3 font-semibold text-orange-600 bg-gray-100 rounded-tr-xl"
+            className="flex-1 py-4 font-semibold text-sm rounded-tr-xl"
+            style={{ 
+              backgroundColor: "var(--primary)", 
+              color: "white"
+            }}
             onClick={() => router.push('/subscription')}
           >
             {t('following')}

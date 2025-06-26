@@ -104,6 +104,11 @@ export default function PublishPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return; // Empêche les doubles soumissions
+    if (!content.trim()) {
+      setError("Le contenu ne peut pas être vide");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     try {
@@ -125,21 +130,30 @@ export default function PublishPage() {
           credentials: "include",
         }
       );
-      // Redirige vers home si une vidéo a été publiée et la requête a réussi
-      if (video && res.ok) {
+      
+      if (res.ok) {
+        // Réinitialiser le formulaire
+        setContent("");
+        setTags([]);
+        setTag("");
+        setImage(null);
+        setVideo(null);
+        setImagePreview(null);
+        setOriginalImage(null);
+        setShowCropper(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        
+        // Rediriger vers home
         router.push("/home");
         return;
-      }
-      // Redirige aussi si une image a été publiée et la requête a réussi
-      if (image && res.ok) {
-        router.push("/home");
-        return;
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || t("publishError"));
       }
     } catch (e) {
       setError(t("publishError"));
-      setLoading(false); // On réactive le bouton seulement en cas d'erreur
     } finally {
-      // On ne réactive plus le bouton ici, car la page va changer si succès
+      setLoading(false);
     }
   };
 
@@ -338,7 +352,6 @@ export default function PublishPage() {
               onChange={(e) => setContent(e.target.value)}
               rows={3}
               maxLength={280}
-              required
             />
             {/* Tags */}
             <div className="flex gap-2">
@@ -389,7 +402,7 @@ export default function PublishPage() {
           <div className="p-3.5 pt-0">
             <PrimaryButton 
               type="submit" 
-              disabled={loading || (showCropper && imagePreview)}
+              disabled={loading || !content.trim() || (showCropper && imagePreview)}
             >
               {loading ? t("publishing") : t("publish")}
             </PrimaryButton>
