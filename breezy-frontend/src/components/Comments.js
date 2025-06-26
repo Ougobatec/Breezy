@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Comments({ postId, token, user, onClose }) {
@@ -84,7 +85,25 @@ export default function Comments({ postId, token, user, onClose }) {
         )}
         <div style={{ marginLeft: level * 24 }}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full" style={{ backgroundColor: "var(--input)" }} />
+            {comment.user_id?.avatar ? (
+              <Image
+                src={comment.user_id.avatar.startsWith("http") ? comment.user_id.avatar : `${process.env.NEXT_PUBLIC_BACKEND_URL}${comment.user_id.avatar}`}
+                alt="Avatar"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--input)" }}>
+                <Image
+                  src="/avatar.svg"
+                  alt="Avatar temporaire"
+                  width={32}
+                  height={32}
+                  className="w-5 h-5"
+                />
+              </div>
+            )}
             <div>
               <span className="font-bold text-xs" style={{ color: "var(--text-primary)" }}>
                 {comment.user_id?.name || "Name"}
@@ -188,9 +207,28 @@ export default function Comments({ postId, token, user, onClose }) {
       >
         <form
           onSubmit={handleAddComment}
-          className="flex px-4 py-3 w-full max-w-md mx-auto"
+          className="flex items-center px-4 py-3 w-full max-w-md mx-auto gap-2"
           style={{ justifyContent: "center" }}
         >
+          {user?.avatar ? (
+            <Image
+              src={user.avatar.startsWith("http") ? user.avatar : `${process.env.NEXT_PUBLIC_BACKEND_URL}${user.avatar}`}
+              alt="Votre avatar"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--input)" }}>
+              <Image
+                src="/avatar.svg"
+                alt="Avatar temporaire"
+                width={32}
+                height={32}
+                className="w-5 h-5"
+              />
+            </div>
+          )}
           <input
             className="flex-1 rounded-xl border px-3 py-2 text-sm"
             style={{
@@ -205,7 +243,7 @@ export default function Comments({ postId, token, user, onClose }) {
           />
           <button
             type="submit"
-            className="ml-2 px-3 py-2 rounded-xl text-sm"
+            className="ml-2 px-3 py-2 rounded-xl text-sm flex-shrink-0"
             style={{
               backgroundColor: "var(--card)",
               color: "var(--text-primary)",
