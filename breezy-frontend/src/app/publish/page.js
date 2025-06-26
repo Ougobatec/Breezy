@@ -170,19 +170,19 @@ export default function PublishPage() {
               </button>
             </div>
             <div className="flex gap-1 flex-wrap text-xs" style={{ color: "var(--text-secondary)" }}>
-              {tags.map((t) => (
+              {tags.map((tagItem) => (
                 <span
-                  key={t}
+                  key={tagItem}
                   className="border rounded-full pl-2 py-1 flex items-center"
                   style={{ borderColor: "var(--border)" }}
                 >
-                  #{t}
+                  #{tagItem}
                   <button
                     type="button"
                     className="mx-1 w-4 h-4 rounded-full cursor-pointer"
                     style={{ backgroundColor: "var(--primary)", color: "var(--text-inverted)" }}
                     title={t('removeTag')}
-                    onClick={() => handleRemoveTag(t)}
+                    onClick={() => handleRemoveTag(tagItem)}
                   >
                     ×
                   </button>

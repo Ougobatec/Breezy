@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Comments({ postId, token, user, onClose }) {
+  const { t, language } = useLanguage();
   const [comments, setComments] = useState([]);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,7 +93,7 @@ export default function Comments({ postId, token, user, onClose }) {
                 @{comment.user_id?.username || "username"}
               </span>
               <span className="text-xs ml-2" style={{ color: "var(--text-secondary)" }}>
-                {new Date(comment.created_at).toLocaleString("fr-FR")}
+                {new Date(comment.created_at).toLocaleString(language === 'fr' ? "fr-FR" : "en-US")}
               </span>
             </div>
             <button
@@ -102,7 +104,7 @@ export default function Comments({ postId, token, user, onClose }) {
                 setReplyContent("");
               }}
             >
-              Répondre
+              {t('reply')}
             </button>
           </div>
           <div className="ml-10 text-xs" style={{ color: "var(--text-primary)" }}>
@@ -120,7 +122,7 @@ export default function Comments({ postId, token, user, onClose }) {
                   borderColor: "var(--border)",
                   color: "var(--text-primary)",
                 }}
-                placeholder="Votre réponse..."
+                placeholder={t('yourReply')}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 disabled={loading}
@@ -136,7 +138,7 @@ export default function Comments({ postId, token, user, onClose }) {
                 }}
                 disabled={loading || !replyContent}
               >
-                Publier
+                {t('publish')}
               </button>
               <button
                 type="button"
@@ -147,7 +149,7 @@ export default function Comments({ postId, token, user, onClose }) {
                 }}
                 onClick={() => setReplyTo(null)}
               >
-                Annuler
+                {t('cancel')}
               </button>
             </form>
           )}
@@ -196,7 +198,7 @@ export default function Comments({ postId, token, user, onClose }) {
               borderColor: "var(--border)",
               color: "var(--text-primary)",
             }}
-            placeholder="Ajouter un commentaire"
+            placeholder={t('addComment')}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             disabled={loading}
@@ -211,7 +213,7 @@ export default function Comments({ postId, token, user, onClose }) {
             }}
             disabled={loading || !content}
           >
-            Publier
+            {t('publish')}
           </button>
         </form>
         <div className="flex justify-center pb-2 w-full">
@@ -225,9 +227,9 @@ export default function Comments({ postId, token, user, onClose }) {
               margin: "0 auto",
               display: "block",
             }}
-            aria-label="Fermer les commentaires"
+            aria-label={t('closeComments')}
           >
-            Fermer
+            {t('close')}
           </button>
         </div>
       </div>

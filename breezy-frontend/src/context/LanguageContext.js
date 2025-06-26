@@ -78,6 +78,7 @@ const translations = {
     addComment: "Ajouter un commentaire",
     reply: "Répondre",
     yourReply: "Votre réponse...",
+    closeComments: "Fermer",
     
     // Subscriptions
     subscribe: "S'abonner",
@@ -181,6 +182,7 @@ const translations = {
     addComment: "Add a comment",
     reply: "Reply",
     yourReply: "Your reply...",
+    closeComments: "Close",
     
     // Subscriptions
     subscribe: "Subscribe",
