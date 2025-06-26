@@ -13,12 +13,17 @@ const postController = {
 
         // Si une image est envoyée
         if (req.file) {
-            // Déplacer le fichier dans /uploads
+            // Créer le dossier uploads/posts s'il n'existe pas
+            const postsDir = path.join("uploads", "posts");
+            if (!fs.existsSync(postsDir)) {
+                fs.mkdirSync(postsDir, { recursive: true });
+            }
+            // Déplacer le fichier dans /uploads/posts
             const ext = path.extname(req.file.originalname);
             const filename = `${Date.now()}_${userId}${ext}`;
-            const destPath = path.join("uploads", filename);
+            const destPath = path.join(postsDir, filename);
             fs.writeFileSync(destPath, req.file.buffer);
-            media = `/${destPath.replace(/\\/g, "/")}`;
+            media = `/uploads/posts/${filename}`;
         }
 
         const tags = req.body["tags[]"]
