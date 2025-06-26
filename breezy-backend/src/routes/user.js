@@ -13,11 +13,16 @@ const upload = multer({
 
 const userRouter = express.Router();
 
+// Routes pour le profil de l'utilisateur connecté
 // GET la biographie et l'avatar
 userRouter.get("/profile", authMiddleware, userController.getBio);
 // PUT la biographie avec possibilité d'upload d'avatar
 userRouter.put("/profile", authMiddleware, upload.single("avatar"), userController.updateBio);
 // PUT l'avatar
 userRouter.put("/profile/avatar", authMiddleware, userController.uploadAvatar);
+
+// Routes pour les profils publics
+// GET le profil public d'un utilisateur par ID
+userRouter.get("/:id", authMiddleware, userController.getPublicProfile);
 
 export default userRouter;

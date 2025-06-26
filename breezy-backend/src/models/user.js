@@ -11,7 +11,9 @@ const userSchema = new mongoose.Schema({
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     language: { type: String, default: 'fr' },
     suspended: { type: Boolean, default: false },
-    banned: { type: Boolean, default: false }
+    banned: { type: Boolean, default: false },
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 })
 
 const UserModel = mongoose.model('User', userSchema);

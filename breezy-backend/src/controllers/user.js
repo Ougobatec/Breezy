@@ -1,4 +1,6 @@
 import UserModel from "#models/user.js";
+import PostModel from "#models/post.js";
+import SubscriptionModel from "#models/subscription.js";
 import multer from "multer";
 import path from "path";
 
@@ -92,8 +94,50 @@ const userController = {
                 res.status(500).json({ message: "Erreur serveur" });
             }
         }
-    }
-}
+    },
 
+    // GET /users/:id : récupère le profil public d'un utilisateur
+    getPublicProfile: async (req, res) => {
+        try {
+            const userId = req.params.id;
+            const currentUserId = req.user.userId;
+            
+            const user = await UserModel.findById(userId).select('-password -email');
+            
+            if (!user) {
+                return res.status(404).json({ message: "Utilisateur non trouvé" });
+            }
+
+            // Compter les posts réels
+            const postsCount = await PostModel.countDocuments({ user_id: userId });
+            
+            // Compter les followers et following via le modèle Subscription
+            const followersCount = await SubscriptionModel.countDocuments({ subscription_id: userId });
+            const followingCount = await SubscriptionModel.countDocuments({ subscriber_id: userId });
+            
+            // Vérifier si l'utilisateur actuel suit déjà cet utilisateur
+            const isFollowing = await SubscriptionModel.findOne({
+                subscriber_id: currentUserId,
+                subscription_id: userId
+            });
+
+            res.json({
+                _id: user._id,
+                name: user.name,
+                username: user.username,
+                biography: user.biography,
+                avatar: user.avatar,
+                postsCount,
+                followersCount,
+                followingCount,
+                isFollowing: !!isFollowing
+            });
+        } catch (err) {
+            console.error("Error in getPublicProfile:", err);
+            res.status(500).json({ message: "Erreur serveur" });
+        }
+    }
+
+}
 
 export default userController;

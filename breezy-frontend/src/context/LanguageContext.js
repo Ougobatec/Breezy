@@ -73,6 +73,9 @@ const translations = {
     welcomeMessage: "Bienvenue",
     noPostsMessage: "Aucun post à afficher.",
     deletePostConfirm: "Voulez-vous vraiment supprimer ce post ?",
+    userNotFound: "Utilisateur non trouvé",
+    deleteError: "Erreur lors de la suppression du post.",
+    unknownDate: "Date inconnue",
     
     // Comments
     addComment: "Ajouter un commentaire",
@@ -177,6 +180,9 @@ const translations = {
     welcomeMessage: "Welcome",
     noPostsMessage: "No posts to display.",
     deletePostConfirm: "Do you really want to delete this post?",
+    userNotFound: "User not found",
+    deleteError: "Error deleting post.",
+    unknownDate: "Unknown date",
     
     // Comments
     addComment: "Add a comment",
