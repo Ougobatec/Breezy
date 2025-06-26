@@ -19,7 +19,7 @@ export default function SuspendedUserMessage() {
                         <strong>Compte suspendu</strong>
                     </p>
                     <p className="text-sm text-yellow-600 mt-1">
-                        Votre compte est actuellement suspendu. Vous ne pouvez pas publier de contenu ou commenter jusqu'à ce que la suspension soit levée.
+                        Votre compte est actuellement suspendu. Vous ne pouvez pas publier de contenu ou commenter jusqu&apos;à ce que la suspension soit levée.
                     </p>
                 </div>
             </div>

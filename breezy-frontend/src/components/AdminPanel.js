@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-
+import Image from "next/image";
 export default function AdminPanel() {
     const { user, token } = useAuth();
     const { t } = useLanguage();
@@ -188,7 +188,7 @@ export default function AdminPanel() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold mb-4">Accès refusé</h1>
-                    <p>Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+                    <p>Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.</p>
                 </div>
             </div>
         );
@@ -196,7 +196,7 @@ export default function AdminPanel() {
 
     return (
         <div className="max-w-6xl mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">Panel d'Administration</h1>
+            <h1 className="text-3xl font-bold mb-6">Panel d&apos;Administration</h1>
             
             {/* Navigation */}
             <div className="flex space-x-4 mb-6 border-b">
@@ -368,7 +368,7 @@ export default function AdminPanel() {
                                 </div>
                                 <p className="mb-2">{post.content}</p>
                                 {post.media && (
-                                    <img 
+                                    <Image
                                         src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`} 
                                         alt="Post media" 
                                         className="max-w-xs rounded"
