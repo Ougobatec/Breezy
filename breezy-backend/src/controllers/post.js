@@ -13,10 +13,16 @@ const postController = {
 
         // Si une image est envoyée
         if (req.file) {
+            // S'assurer que le dossier uploads existe
+            const uploadsDir = "uploads";
+            if (!fs.existsSync(uploadsDir)) {
+                fs.mkdirSync(uploadsDir, { recursive: true });
+            }
+            
             // Déplacer le fichier dans /uploads
             const ext = path.extname(req.file.originalname);
             const filename = `${Date.now()}_${userId}${ext}`;
-            const destPath = path.join("uploads", filename);
+            const destPath = path.join(uploadsDir, filename);
             fs.writeFileSync(destPath, req.file.buffer);
             media = `/${destPath.replace(/\\/g, "/")}`;
         }

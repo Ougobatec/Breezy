@@ -3,10 +3,11 @@ import PostModel from "#models/post.js";
 import SubscriptionModel from "#models/subscription.js";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 // Multer config pour l'upload d'avatar
 const upload = multer({
-    dest: "/uploads/avatars",
+    dest: "uploads/avatars",  // Retiré le slash initial
     limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
 });
 
@@ -54,6 +55,12 @@ const userController = {
             
             // Gérer l'upload d'avatar (si un fichier est envoyé)
             if (req.file) {
+                // S'assurer que le dossier uploads/avatars existe
+                const avatarsDir = path.join("uploads", "avatars");
+                if (!fs.existsSync(avatarsDir)) {
+                    fs.mkdirSync(avatarsDir, { recursive: true });
+                }
+                
                 updateFields.avatar = `/uploads/avatars/${req.file.filename}`;
             }
             
