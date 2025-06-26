@@ -54,7 +54,6 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             credentials: "include", // <-- Ajoute cette ligne
         });
         
-<<<<<<< dev
         setIsDeleting(true);
         try {
             const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
@@ -69,11 +68,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 alert(t('deleteError'));
             }
         } catch (error) {
-=======
-        if (response.ok && onDeletePost) {
-            onDeletePost(postId);
-        } else {
->>>>>>> Fx18-Ajout-d’images-aux-messages
+
             alert(t('deleteError'));
         }
     } catch (error) {
