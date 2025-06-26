@@ -54,9 +54,26 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             credentials: "include", // <-- Ajoute cette ligne
         });
         
+<<<<<<< dev
+        setIsDeleting(true);
+        try {
+            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
+            const response = await fetch(url, {
+                method: "DELETE",
+                credentials: "include",
+            });
+            
+            if (response.ok && onDeletePost) {
+                onDeletePost(postId);
+            } else {
+                alert(t('deleteError'));
+            }
+        } catch (error) {
+=======
         if (response.ok && onDeletePost) {
             onDeletePost(postId);
         } else {
+>>>>>>> Fx18-Ajout-d’images-aux-messages
             alert(t('deleteError'));
         }
     } catch (error) {
@@ -86,7 +103,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     }, [showMenu]);
 
     // Vérifier si l'utilisateur actuel peut supprimer ce post
-    const canDeletePost = showDeleteOption && currentUser && (
+    const canDeletePost = showDeleteOption && currentUser && post.user_id && (
         currentUser.id === post.user_id?._id || 
         currentUser._id === post.user_id?._id ||
         currentUser.id === post.user_id ||
@@ -117,12 +134,21 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                     </div>
                 )}
                 <div className="flex flex-col flex-1 gap-0.5">
-                    <Link href={`/users/${post.user_id._id}`} className="flex items-center gap-1 font-semibold text-sm">
-                        <span>{post.user_id.name}</span>
-                        <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                            @{post.user_id.username}
-                        </span>
-                    </Link>
+                    {post.user_id?._id ? (
+                        <Link href={`/users/${post.user_id._id}`} className="flex items-center gap-1 font-semibold text-sm">
+                            <span>{post.user_id?.name || "Utilisateur"}</span>
+                            <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                                @{post.user_id?.username || "unknown"}
+                            </span>
+                        </Link>
+                    ) : (
+                        <div className="flex items-center gap-1 font-semibold text-sm">
+                            <span>{post.user_id?.name || "Utilisateur inconnu"}</span>
+                            <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                                @{post.user_id?.username || "unknown"}
+                            </span>
+                        </div>
+                    )}
                     <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
                         {post.created_at
                             ? new Date(post.created_at).toLocaleString(language === 'fr' ? "fr-FR" : "en-US", {
