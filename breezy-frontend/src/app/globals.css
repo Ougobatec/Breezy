@@ -13,15 +13,23 @@
   --text-action: #d52b00;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Mode sombre forcé via la classe .dark */
+.dark {
+  --primary: #d52b00;
+  --background: #202020;
+  --card: #202020;
+  --UI: #202020;
+  --input: #505050;
+  --border: #505050;
+  --text-primary: #e9e9e9;
+  --text-secondary: #aaaaaa;
+  --text-inverted: #e9e9e9;
+  --text-action: #d52b00;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+/* Mode système : suit la préférence du navigateur */
+.system {
+  @media (prefers-color-scheme: dark) {
     --primary: #d52b00;
     --background: #202020;
     --card: #202020;
@@ -35,17 +43,11 @@
   }
 }
 
-.dark {
-  --primary: #d52b00;
-  --background: #202020;
-  --card: #202020;
-  --UI: #202020;
-  --input: #505050;
-  --border: #505050;
-  --text-primary: #e9e9e9;
-  --text-secondary: #aaaaaa;
-  --text-inverted: #e9e9e9;
-  --text-action: #d52b00;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
