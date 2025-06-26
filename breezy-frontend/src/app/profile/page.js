@@ -17,6 +17,7 @@ export default function ProfilePage() {
     const [postsLoading, setPostsLoading] = useState(true);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [removeAvatar, setRemoveAvatar] = useState(false);
+    const [profileRefresh, setProfileRefresh] = useState(0);
     const fileInputRef = useRef(null);
     const router = useRouter();
 
@@ -29,10 +30,10 @@ export default function ProfilePage() {
             .then(res => res.json())
             .then(data => setForm({
                 name: data.name || user?.name || "",
-                bio: data.biography || ""
+                bio: data.biography || user?.biography || ""
             }))
-            .catch(() => setForm({ name: user?.name || "", bio: "" }));
-    }, [token, user?.name]);
+            .catch(() => setForm({ name: user?.name || "", bio: user?.biography || "" }));
+    }, [token, user?.name, user?.biography, profileRefresh]);
 
     // Récupération des posts (filtrage côté client si besoin, fallback si l'API ne supporte pas userId)
     useEffect(() => {
@@ -72,22 +73,47 @@ export default function ProfilePage() {
 
     // Sauvegarde du profil (nom, bio, avatar)
     const handleProfileUpdate = async () => {
-        const formData = new FormData();
-        formData.append("name", form.name);
-        formData.append("biography", form.bio);
-        if (fileInputRef.current && fileInputRef.current.files[0]) {
-            formData.append("avatar", fileInputRef.current.files[0]);
+        try {
+            const formData = new FormData();
+            formData.append("name", form.name);
+            formData.append("bio", form.bio);
+            if (fileInputRef.current && fileInputRef.current.files[0]) {
+                formData.append("avatar", fileInputRef.current.files[0]);
+            }
+            formData.append("removeAvatar", removeAvatar ? "true" : "false");
+            
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
+                method: "PUT",
+                body: formData,
+                credentials: "include",
+            });
+            
+            if (response.ok) {
+                // Récupérer les données mises à jour
+                const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
+                    credentials: "include",
+                });
+                const profileData = await profileResponse.json();
+                
+                // Mettre à jour le formulaire avec les nouvelles données
+                setForm({
+                    name: profileData.name || "",
+                    bio: profileData.biography || ""
+                });
+                
+                // Rafraîchir les données utilisateur dans l'AuthContext
+                await login();
+                
+                setEditing(false);
+                setAvatarPreview(null);
+                setRemoveAvatar(false);
+                
+                // Forcer le rechargement des données du profil
+                setProfileRefresh(prev => prev + 1);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour du profil:", error);
         }
-        formData.append("removeAvatar", removeAvatar ? "true" : "false");
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
-            method: "PUT",
-            body: formData,
-            credentials: "include",
-        });
-        setEditing(false);
-        setAvatarPreview(null);
-        setRemoveAvatar(false);
-        router.replace(router.asPath); // Rafraîchit la page sans reload complet
     };
 
     // Suppression d'un post
@@ -98,7 +124,16 @@ export default function ProfilePage() {
     // Reset du formulaire
     const handleCancel = () => {
         setEditing(false);
-        setForm({ name: user.name || "", bio: "" });
+        // Récupérer les données actuelles au lieu de remettre à vide
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
+            credentials: "include",
+        })
+            .then(res => res.json())
+            .then(data => setForm({
+                name: data.name || user?.name || "",
+                bio: data.biography || user?.biography || ""
+            }))
+            .catch(() => setForm({ name: user?.name || "", bio: user?.biography || "" }));
         setAvatarPreview(null);
         setRemoveAvatar(false);
     };
@@ -195,7 +230,7 @@ export default function ProfilePage() {
                                 <span className="font-bold text-base text-gray-800">{user.name || "Name"}</span>
                                 <span className="text-xs text-gray-400">@{user.username || "username"}</span>
                                 <p className="text-xs text-gray-600 mt-2">
-                                    {form.bio || t('addBio')}
+                                    {user.biography || form.bio || "Ajoutez une bio à votre profil."}
                                 </p>
                             </>
                         )}
