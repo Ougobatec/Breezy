@@ -322,7 +322,10 @@ export default function PublishPage() {
             {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
           </div>
           <div className="p-3.5 pt-0">
-            <PrimaryButton type="submit" disabled={loading || showCropper}>
+            <PrimaryButton 
+              type="submit" 
+              disabled={loading || (showCropper && imagePreview)}
+            >
               {loading ? t("publishing") : t("publish")}
             </PrimaryButton>
           </div>
