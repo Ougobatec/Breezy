@@ -305,7 +305,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             {post.media && (
                 post.media.match(/\.(mp4|webm|ogg|mov)$/i) ? (
                     <div className="relative">
-                        <div className="w-full" style={{ aspectRatio: '4/3', position: 'relative' }}>
+                        <div className="w-full aspect-[1/1] mb-2" style={{ position: 'relative' }}>
                             <video
                                 ref={videoRef}
                                 src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
@@ -313,7 +313,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                                 muted={isMuted}
                                 loop
                                 playsInline
-                                className="w-full h-full mb-2 rounded-xl object-cover"
+                                className="w-full h-full object-cover"
                                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                             />
                             <button
