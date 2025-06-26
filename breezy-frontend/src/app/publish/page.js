@@ -26,8 +26,25 @@ export default function PublishPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const fileInputRef = useRef();
   const [originalImage, setOriginalImage] = useState(null);
+  const [video, setVideo] = useState(null);
 
-
+  function handleMediaChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.type.startsWith("image/")) {
+    setVideo(null); // <-- Ajoute ceci pour éviter d'uploader une vidéo en même temps
+    setOriginalImage(file);
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    setShowCropper(true);
+  } else if (file.type.startsWith("video/")) {
+    setImage(null);
+    setOriginalImage(null);
+    setImagePreview(URL.createObjectURL(file));
+    setShowCropper(false);
+    setVideo(file);
+  }
+}
   const handleImageChange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -63,6 +80,7 @@ export default function PublishPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return; // Empêche les doubles soumissions
     setLoading(true);
     setError("");
     try {
@@ -70,6 +88,7 @@ export default function PublishPage() {
       formData.append("content", content);
       tags.forEach((t) => formData.append("tags[]", t));
       if (image) formData.append("image", image);
+      else if (video) formData.append("image", video);
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
@@ -79,16 +98,21 @@ export default function PublishPage() {
           credentials: "include",
         }
       );
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.message || t("publishError"));
-      } else {
-        router.replace("/home");
+      // Redirige vers home si une vidéo a été publiée et la requête a réussi
+      if (video && res.ok) {
+        router.push("/home");
+        return;
+      }
+      // Redirige aussi si une image a été publiée et la requête a réussi
+      if (image && res.ok) {
+        router.push("/home");
+        return;
       }
     } catch (e) {
       setError(t("publishError"));
+      setLoading(false); // On réactive le bouton seulement en cas d'erreur
     } finally {
-      setLoading(false);
+      // On ne réactive plus le bouton ici, car la page va changer si succès
     }
   };
 
@@ -140,11 +164,31 @@ export default function PublishPage() {
 
           {/* Image du post avec cropper */}
           <label
-            htmlFor="image-upload"
+            htmlFor="media-upload"
             className="w-full aspect-[1/1] flex items-center justify-center cursor-pointer relative"
             style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
           >
-            {imagePreview && showCropper ? (
+            {video && imagePreview ? (
+              <div className="relative w-full h-full">
+                <video
+                  src={imagePreview}
+                  controls
+                  className="object-cover w-full h-full rounded-xl"
+                  style={{ width: "100%", height: "100%" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideo(null);
+                    setImagePreview(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
+                >
+                  Changer la vidéo
+                </button>
+              </div>
+            ) : imagePreview && showCropper ? (
               <div style={{ position: "relative", width: "100%", height: 224 }}>
                 <Cropper
                   image={imagePreview}
@@ -173,7 +217,7 @@ export default function PublishPage() {
                   }}
                   className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
                 >
-                  Changer d'image
+                  Changer d&apos;image
                 </button>
               </div>
             ) : imagePreview ? (
@@ -209,18 +253,18 @@ export default function PublishPage() {
                   }}
                   className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
                 >
-                  Changer d'image
+                  Changer d&apos;image
                 </button>
               </div>
             ) : (
               <span style={{ color: "var(--text-secondary)" }}>{t("addImage")}</span>
             )}
             <input
-              id="image-upload"
+              id="media-upload"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
-              onChange={handleImageChange}
+              onChange={handleMediaChange}
               ref={fileInputRef}
               disabled={showCropper}
             />

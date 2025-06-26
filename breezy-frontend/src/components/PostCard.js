@@ -178,13 +178,23 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
 
             {/* Image du post */}
             {post.media && (
-                <Image
+                post.media.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                    <video
+                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
+                    controls
+                    className="w-full aspect-video mb-2 rounded-xl"
+                    style={{ maxHeight: 400, objectFit: "cover" }}
+                    />
+                ) : (
+                    <Image
                     src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
                     alt="post"
                     className="w-full aspect-[1/1] object-cover mb-2"
                     width={600}
                     height={600}
-                />
+                    unoptimized
+                    />
+                )
             )}
 
             {/* Contenu */}
@@ -237,7 +247,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                     className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm z-50 cursor-pointer"
                     onClick={() => setShowShareMessage(false)}
                 >
-                    Cette fonctionnalité n'est pas disponible pour le moment
+                    Cette fonctionnalité n&apos;est pas disponible pour le moment
                 </div>
             )}
 

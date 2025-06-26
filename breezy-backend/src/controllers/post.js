@@ -11,16 +11,18 @@ const postController = {
         const userId = req.user.userId;
         let media = null;
 
-        // Si une image est envoyée
         if (req.file) {
-
-            // Créer le dossier uploads/posts s'il n'existe pas
             const postsDir = path.join("uploads", "posts");
             if (!fs.existsSync(postsDir)) {
                 fs.mkdirSync(postsDir, { recursive: true });
             }
-            // Déplacer le fichier dans /uploads/posts
-            const ext = path.extname(req.file.originalname);
+            let ext = path.extname(req.file.originalname);
+            if (!ext) {
+                if (req.file.mimetype.startsWith("image/")) ext = ".png";
+                else if (req.file.mimetype === "video/mp4") ext = ".mp4";
+                else if (req.file.mimetype === "video/webm") ext = ".webm";
+                else if (req.file.mimetype === "video/ogg") ext = ".ogv";
+            }
             const filename = `${Date.now()}_${userId}${ext}`;
             const destPath = path.join(postsDir, filename);
 
@@ -42,7 +44,6 @@ const postController = {
         res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
     }
 },
-
     // Récupérer tous les posts
     getAllPosts: async (req, res) => {
         try {
