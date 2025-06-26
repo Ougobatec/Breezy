@@ -1,20 +1,40 @@
 import PostModel from "#models/post.js";
 import SubscriptionModel from "#models/subscription.js"
 import notificationController from "./notification.js";
+import path from "path";
+import fs from "fs";
 
 const postController = {
     createPost: async (req, res) => {
-        try {
-            const { content } = req.body;
-            const userId = req.user.userId;
-            const post = new PostModel({ content, user_id: userId });
-            await post.save();
-            res.status(201).json({ message: "Post créé avec succès", post });
-        } catch (error) {
-            console.error("Erreur lors de la création du post :", error);
-            res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
+    try {
+        const { content } = req.body;
+        const userId = req.user.userId;
+        let media = null;
+
+        // Si une image est envoyée
+        if (req.file) {
+            // Déplacer le fichier dans /uploads
+            const ext = path.extname(req.file.originalname);
+            const filename = `${Date.now()}_${userId}${ext}`;
+            const destPath = path.join("uploads", filename);
+            fs.writeFileSync(destPath, req.file.buffer);
+            media = `/${destPath.replace(/\\/g, "/")}`;
         }
-    },
+
+        const tags = req.body["tags[]"]
+            ? Array.isArray(req.body["tags[]"])
+                ? req.body["tags[]"]
+                : [req.body["tags[]"]]
+            : [];
+
+        const post = new PostModel({ content, user_id: userId, media, tags });
+        await post.save();
+        res.status(201).json({ message: "Post créé avec succès", post });
+    } catch (error) {
+        console.error("Erreur lors de la création du post :", error);
+        res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
+    }
+},
 
     // Récupérer tous les posts
     getAllPosts: async (req, res) => {
