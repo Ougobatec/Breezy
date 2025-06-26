@@ -33,6 +33,7 @@ import routerNotification from '#routes/notification.js'
 import routerSearch from '#routes/search.js'
 
 app.use('/uploads/avatars', express.static('/uploads/avatars'))
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
 
