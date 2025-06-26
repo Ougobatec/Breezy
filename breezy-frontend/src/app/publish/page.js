@@ -24,21 +24,58 @@ export default function PublishPage() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const ffmpeg = useRef(null);
   const fileInputRef = useRef();
   const [originalImage, setOriginalImage] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [videoFrame, setVideoFrame] = useState(null);
+
 
   // Vérifier si l'utilisateur peut publier
   const canPublish = user && !user.suspended && !user.banned;
 
+  function handleMediaChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.type.startsWith("image/")) {
+      setVideo(null);
+      setVideoFrame(null);
+      setOriginalImage(file);
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setShowCropper(true);
+    } else if (file.type.startsWith("video/")) {
+      setImage(null);
+      setOriginalImage(null);
+      setImagePreview(URL.createObjectURL(file));
+      setShowCropper(false);
+      setVideo(file);
+      // Générer la première frame pour le cropper
+      const videoUrl = URL.createObjectURL(file);
+      const videoEl = document.createElement('video');
+      videoEl.src = videoUrl;
+      videoEl.currentTime = 0.1;
+      videoEl.crossOrigin = 'anonymous';
+      videoEl.addEventListener('loadeddata', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        setVideoFrame(canvas.toDataURL('image/jpeg'));
+        URL.revokeObjectURL(videoUrl);
+      });
+    }
+  }
 
   const handleImageChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  setOriginalImage(file);
-  setImage(file);
-  setImagePreview(URL.createObjectURL(file));
-  setShowCropper(true);
-};
+    const file = e.target.files[0];
+    if (!file) return;
+    setOriginalImage(file);
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    setShowCropper(true);
+  };
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -66,6 +103,7 @@ export default function PublishPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return; // Empêche les doubles soumissions
     setLoading(true);
     setError("");
     try {
@@ -77,6 +115,7 @@ export default function PublishPage() {
         tags.forEach((t) => formData.append("tags", t));
       }
       if (image) formData.append("image", image);
+      else if (video) formData.append("image", video);
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts`,
@@ -86,16 +125,21 @@ export default function PublishPage() {
           credentials: "include",
         }
       );
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.message || t("publishError"));
-      } else {
-        router.replace("/home");
+      // Redirige vers home si une vidéo a été publiée et la requête a réussi
+      if (video && res.ok) {
+        router.push("/home");
+        return;
+      }
+      // Redirige aussi si une image a été publiée et la requête a réussi
+      if (image && res.ok) {
+        router.push("/home");
+        return;
       }
     } catch (e) {
       setError(t("publishError"));
+      setLoading(false); // On réactive le bouton seulement en cas d'erreur
     } finally {
-      setLoading(false);
+      // On ne réactive plus le bouton ici, car la page va changer si succès
     }
   };
 
@@ -177,11 +221,32 @@ export default function PublishPage() {
 
           {/* Image du post avec cropper */}
           <label
-            htmlFor="image-upload"
+            htmlFor="media-upload"
             className="w-full aspect-[1/1] flex items-center justify-center cursor-pointer relative"
             style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
           >
-            {imagePreview && showCropper ? (
+            {video && imagePreview ? (
+              // Affichage simple de la vidéo, sans cropper
+              <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
+                <video
+                  src={imagePreview}
+                  controls
+                  className="object-cover w-full h-full rounded-xl"
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideo(null);
+                    setImagePreview(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
+                >
+                  Changer la vidéo
+                </button>
+              </div>
+            ) : imagePreview && showCropper ? (
               <div style={{ position: "relative", width: "100%", height: 224 }}>
                 <Cropper
                   image={imagePreview}
@@ -253,11 +318,11 @@ export default function PublishPage() {
               <span style={{ color: "var(--text-secondary)" }}>{t("addImage")}</span>
             )}
             <input
-              id="image-upload"
+              id="media-upload"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
-              onChange={handleImageChange}
+              onChange={handleMediaChange}
               ref={fileInputRef}
               disabled={showCropper}
             />

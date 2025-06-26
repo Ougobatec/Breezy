@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ActiveVideoProvider } from "@/context/ActiveVideoContext";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -28,9 +29,11 @@ export default function RootLayout({ children }) {
                 <ThemeProvider>
             <LanguageProvider>
                 <AuthProvider>
-                    {children}
-                        </AuthProvider>
-                        </LanguageProvider>
+                    <ActiveVideoProvider>
+                        {children}
+                    </ActiveVideoProvider>
+                </AuthProvider>
+            </LanguageProvider>
                 </ThemeProvider>
                 </GoogleOAuthProvider>
             </body>

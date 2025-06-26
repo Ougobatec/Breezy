@@ -1,13 +1,15 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import Comments from "@/components/Comments";
 import { useLanguage } from "@/context/LanguageContext";
+import { useActiveVideo } from "@/context/ActiveVideoContext";
 
 export default function PostCard({ post, token, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
     const { t, language } = useLanguage();
+    const { activeVideoId, setActiveVideoId } = useActiveVideo();
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -17,8 +19,64 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     const [showReportDialog, setShowReportDialog] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [isReporting, setIsReporting] = useState(false);
-
+    const [isMuted, setIsMuted] = useState(true);
+    const videoRef = useRef(null);
     const postId = post._id || post.id;
+
+    useEffect(() => {
+        if (!videoRef.current) return;
+        const video = videoRef.current;
+        let observer;
+        if (video) {
+            observer = new window.IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                },
+                { threshold: 0.5 }
+            );
+            observer.observe(video);
+        }
+        return () => {
+            if (observer && video) observer.unobserve(video);
+        };
+    }, [videoRef]);
+
+    useEffect(() => {
+        if (!videoRef.current) return;
+        const video = videoRef.current;
+        const handle = () => {
+            if (!videoRef.current) return;
+            const rect = videoRef.current.getBoundingClientRect();
+            const viewportCenter = window.innerHeight / 2;
+            const videoCenter = rect.top + rect.height / 2;
+            const distance = Math.abs(viewportCenter - videoCenter);
+            setActiveVideoId((prev) => {
+                // On ne set que si la vidéo est au moins à moitié visible
+                if (
+                    rect.top < window.innerHeight &&
+                    rect.bottom > 0 &&
+                    rect.height > 0 &&
+                    rect.top + rect.height * 0.5 < window.innerHeight &&
+                    rect.bottom - rect.height * 0.5 > 0
+                ) {
+                    return postId;
+                }
+                return prev;
+            });
+        };
+        window.addEventListener("scroll", handle, { passive: true });
+        window.addEventListener("resize", handle);
+        handle();
+        return () => {
+            window.removeEventListener("scroll", handle);
+            window.removeEventListener("resize", handle);
+        };
+    }, [videoRef, postId, setActiveVideoId]);
+
     const isLiked =
         Array.isArray(post.likes) && currentUser
             ? post.likes.includes(currentUser.id) || post.likes.includes(currentUser._id)
@@ -243,15 +301,47 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 </div>
             </div>
 
-            {/* Image du post */}
+            {/* Image ou vidéo du post */}
             {post.media && (
-                <Image
+                post.media.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                    <div className="relative">
+                        <div className="w-full" style={{ aspectRatio: '4/3', position: 'relative' }}>
+                            <video
+                                ref={videoRef}
+                                src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
+                                autoPlay
+                                muted={isMuted}
+                                loop
+                                playsInline
+                                className="w-full h-full mb-2 rounded-xl object-cover"
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setIsMuted((m) => !m)}
+                                className="absolute bottom-2 right-2 bg-black bg-opacity-60 rounded-full p-1 z-10"
+                                style={{ outline: 'none', border: 'none' }}
+                                tabIndex={0}
+                            >
+                                <Image
+                                    src={isMuted ? "/volume-off.svg" : "/volume-on.svg"}
+                                    alt={isMuted ? "Activer le son" : "Couper le son"}
+                                    width={18}
+                                    height={18}
+                                />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <Image
                     src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
                     alt="post"
                     className="w-full aspect-[1/1] object-cover mb-2"
                     width={600}
                     height={600}
-                />
+                    unoptimized
+                    />
+                )
             )}
 
             {/* Contenu */}
@@ -304,7 +394,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                     className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm z-50 cursor-pointer"
                     onClick={() => setShowShareMessage(false)}
                 >
-                    Cette fonctionnalité n'est pas disponible pour le moment
+                    Cette fonctionnalité n&apos;est pas disponible pour le moment
                 </div>
             )}
 

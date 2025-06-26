@@ -27,6 +27,7 @@ const postController = {
             
             let media = null;
 
+<<<<<<< dev
             // Si une image est envoyée
             if (req.file) {
                 // S'assurer que le dossier uploads existe
@@ -62,6 +63,22 @@ const postController = {
                 .filter((t, i, arr) => arr.indexOf(t) === i);
             
             console.log("tags reçu :", tags);
+=======
+        if (req.file) {
+            const postsDir = path.join("uploads", "posts");
+            if (!fs.existsSync(postsDir)) {
+                fs.mkdirSync(postsDir, { recursive: true });
+            }
+            let ext = path.extname(req.file.originalname);
+            if (!ext) {
+                if (req.file.mimetype.startsWith("image/")) ext = ".png";
+                else if (req.file.mimetype === "video/mp4") ext = ".mp4";
+                else if (req.file.mimetype === "video/webm") ext = ".webm";
+                else if (req.file.mimetype === "video/ogg") ext = ".ogv";
+            }
+            const filename = `${Date.now()}_${userId}${ext}`;
+            const destPath = path.join(postsDir, filename);
+>>>>>>> Fx19-Ajout-de-vidéos-aux-messages
 
             const post = new PostModel({ content, user_id: userId, media, tags });
             await post.save();
@@ -70,8 +87,26 @@ const postController = {
             console.error("Erreur lors de la création du post :", error);
             res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
         }
+<<<<<<< dev
     },
 
+=======
+
+        const tags = req.body["tags[]"]
+            ? Array.isArray(req.body["tags[]"])
+                ? req.body["tags[]"]
+                : [req.body["tags[]"]]
+            : [];
+
+        const post = new PostModel({ content, user_id: userId, media, tags });
+        await post.save();
+        res.status(201).json({ message: "Post créé avec succès", post });
+    } catch (error) {
+        console.error("Erreur lors de la création du post :", error);
+        res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
+    }
+},
+>>>>>>> Fx19-Ajout-de-vidéos-aux-messages
     // Récupérer tous les posts
     getAllPosts: async (req, res) => {
         try {
