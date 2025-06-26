@@ -4,9 +4,10 @@ import { useLanguage } from "@/context/LanguageContext";
 import Layout from "@/components/Layout";
 import LoadingScreen from "@/components/LoadingScreen";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
-const NotificationItem = ({ notification, onDelete, onMarkAsRead, t, language }) => {
+const NotificationItem = ({ notification, onDelete, onMarkAsRead, onNavigate, t, language }) => {
   const getNotificationText = () => {
     switch (notification.type) {
       case 'follow':
@@ -43,12 +44,17 @@ const NotificationItem = ({ notification, onDelete, onMarkAsRead, t, language })
     }
   };
 
+  const handleNotificationClick = () => {
+    handleMarkAsRead();
+    onNavigate(notification);
+  };
+
   return (
     <div 
-      className={`flex items-start p-3 mb-2 rounded-xl ${
+      className={`flex items-start p-3 mb-2 rounded-xl cursor-pointer hover:bg-gray-50 ${
         notification.status === 'unread' ? 'bg-blue-50' : 'bg-white'
       }`}
-      onClick={handleMarkAsRead}
+      onClick={handleNotificationClick}
     >
       <div className="flex-shrink-0 mr-3">
         {notification.from_user_id?.avatar ? (
@@ -120,18 +126,13 @@ const NotificationItem = ({ notification, onDelete, onMarkAsRead, t, language })
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
   const { t, language } = useLanguage();
+  const router = useRouter();
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [unreadCount, setUnreadCount] = useState({ total: 0, like: 0, follow: 0, mention: 0 });
+  const [unreadCount, setUnreadCount] = useState({ total: 0, like: 0, follow: 0, mention: 0, comment: 0 });
 
-  useEffect(() => {
-    if (loading || !user) return;
-    fetchNotifications();
-    fetchUnreadCount();
-  }, [loading, user, activeFilter]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setNotificationsLoading(true);
     try {
       const url = activeFilter === 'all' 
@@ -150,9 +151,9 @@ export default function NotificationsPage() {
       setNotifications([]);
     }
     setNotificationsLoading(false);
-  };
+  }, [activeFilter, t]);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/unread-count`,
@@ -165,7 +166,13 @@ export default function NotificationsPage() {
     } catch (error) {
       console.error("Erreur lors du chargement du nombre de notifications:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    fetchNotifications();
+    fetchUnreadCount();
+  }, [loading, user, activeFilter, fetchNotifications, fetchUnreadCount]);
 
   const handleDeleteNotification = async (notificationId) => {
     try {
@@ -228,6 +235,20 @@ export default function NotificationsPage() {
       }
     } catch (error) {
       console.error("Erreur lors du marquage global:", error);
+    }
+  };
+
+  const handleNavigateToNotification = (notification) => {
+    switch (notification.type) {
+      case 'follow':
+        if (notification.from_user_id?._id) {
+          router.push(`/users/${notification.from_user_id._id}`);
+        }
+        break;
+      
+        break;
+      default:
+        break;
     }
   };
 
@@ -297,6 +318,16 @@ export default function NotificationsPage() {
         >
           {t('mentions')} {unreadCount.mention > 0 && `(${unreadCount.mention})`}
         </button>
+        <button
+          onClick={() => setActiveFilter('comment')}
+          className={`px-3 py-1 rounded-full text-sm ${
+            activeFilter === 'comment'
+              ? 'bg-red-500 text-white'
+              : 'bg-white text-gray-600 border'
+          }`}
+        >
+          {t('comments')} {unreadCount.comment > 0 && `(${unreadCount.comment})`}
+        </button>
       </div>
 
       {/* Liste des notifications */}
@@ -312,6 +343,7 @@ export default function NotificationsPage() {
               notification={notification}
               onDelete={handleDeleteNotification}
               onMarkAsRead={handleMarkAsRead}
+              onNavigate={handleNavigateToNotification}
               t={t}
               language={language}
             />
