@@ -1,21 +1,22 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import Layout from "@/components/Layout";
 import LoadingScreen from "@/components/LoadingScreen";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
-const NotificationItem = ({ notification, onDelete, onMarkAsRead }) => {
+const NotificationItem = ({ notification, onDelete, onMarkAsRead, t, language }) => {
   const getNotificationText = () => {
     switch (notification.type) {
       case 'follow':
-        return `Vous avez un nouvel abonné`;
+        return t('newFollowerText');
       case 'like':
-        return `Quelqu'un a aimé votre post`;
+        return t('likeText');
       case 'comment':
-        return `Quelqu'un a commenté votre post`;
+        return t('commentText');
       case 'mention':
-        return `Quelqu'un vous a mentionné dans son post`;
+        return t('mentionText');
       default:
         return notification.content;
     }
@@ -73,12 +74,12 @@ const NotificationItem = ({ notification, onDelete, onMarkAsRead }) => {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900">
-              {notification.type === 'follow' ? 'Nouveau follower' : 
-               notification.type === 'like' ? 'Nouveau like' :
-               notification.type === 'comment' ? 'Nouveau commentaire' :
-               'Nouvelle mention'} 
+              {notification.type === 'follow' ? t('newFollower') : 
+               notification.type === 'like' ? t('newLike') :
+               notification.type === 'comment' ? t('newComment') :
+               t('newMention')} 
               <span className="font-normal text-gray-600 ml-1">
-                @{notification.from_user_id?.username || 'utilisateur'}
+                @{notification.from_user_id?.username || t('user')}
               </span>
             </p>
             <p className="text-xs text-gray-500 mt-1">
@@ -86,11 +87,11 @@ const NotificationItem = ({ notification, onDelete, onMarkAsRead }) => {
             </p>
             {notification.from_post_id?.content && (
               <p className="text-xs text-gray-400 mt-1 truncate">
-                "{notification.from_post_id.content.substring(0, 50)}..."
+                &ldquo;{notification.from_post_id.content.substring(0, 50)}&hellip;&rdquo;
               </p>
             )}
             <p className="text-xs text-gray-400 mt-1">
-              {new Date(notification.created_at).toLocaleString("fr-FR")}
+              {new Date(notification.created_at).toLocaleString(language === 'fr' ? "fr-FR" : "en-US")}
             </p>
           </div>
           
@@ -100,7 +101,7 @@ const NotificationItem = ({ notification, onDelete, onMarkAsRead }) => {
               onDelete(notification._id);
             }}
             className="ml-2 p-1 text-gray-400 hover:text-red-500"
-            aria-label="Supprimer la notification"
+            aria-label={t('deleteNotification')}
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -118,6 +119,7 @@ const NotificationItem = ({ notification, onDelete, onMarkAsRead }) => {
 
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
+  const { t, language } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -140,7 +142,7 @@ export default function NotificationsPage() {
         credentials: "include",
       });
       
-      if (!res.ok) throw new Error("Erreur lors du chargement des notifications");
+      if (!res.ok) throw new Error(t('loadingNotifications'));
       const data = await res.json();
       setNotifications(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -234,21 +236,21 @@ export default function NotificationsPage() {
     return notifications.filter(n => n.type === activeFilter);
   };
 
-  if (loading) return <LoadingScreen text="Connexion en cours..." />;
+  if (loading) return <LoadingScreen text={t('connectingText')} />;
   if (!user) return null;
-  if (notificationsLoading) return <LoadingScreen text="Chargement des notifications..." />;
+  if (notificationsLoading) return <LoadingScreen text={t('loadingNotifications')} />;
 
   return (
-    <Layout headerProps={{ title: "Notifications" }}>
+    <Layout headerProps={{ title: t('notifications') }}>
       {/* Header avec bouton marquer tout comme lu */}
       <div className="flex justify-between items-center p-4 border-b">
-        <h1 className="text-xl font-bold">Notifications</h1>
+        <h1 className="text-xl font-bold">{t('notifications')}</h1>
         {unreadCount.total > 0 && (
           <button
             onClick={handleMarkAllAsRead}
             className="text-sm text-blue-600 hover:underline"
           >
-            Tout marquer comme lu
+            {t('markAllAsRead')}
           </button>
         )}
       </div>
@@ -263,7 +265,7 @@ export default function NotificationsPage() {
               : 'bg-white text-gray-600 border'
           }`}
         >
-          Toutes {unreadCount.total > 0 && `(${unreadCount.total})`}
+          {t('all')} {unreadCount.total > 0 && `(${unreadCount.total})`}
         </button>
         <button
           onClick={() => setActiveFilter('follow')}
@@ -273,7 +275,7 @@ export default function NotificationsPage() {
               : 'bg-white text-gray-600 border'
           }`}
         >
-          Followers {unreadCount.follow > 0 && `(${unreadCount.follow})`}
+          {t('followers')} {unreadCount.follow > 0 && `(${unreadCount.follow})`}
         </button>
         <button
           onClick={() => setActiveFilter('like')}
@@ -283,7 +285,7 @@ export default function NotificationsPage() {
               : 'bg-white text-gray-600 border'
           }`}
         >
-          Likes {unreadCount.like > 0 && `(${unreadCount.like})`}
+          {t('likes')} {unreadCount.like > 0 && `(${unreadCount.like})`}
         </button>
         <button
           onClick={() => setActiveFilter('mention')}
@@ -293,7 +295,7 @@ export default function NotificationsPage() {
               : 'bg-white text-gray-600 border'
           }`}
         >
-          Mentions {unreadCount.mention > 0 && `(${unreadCount.mention})`}
+          {t('mentions')} {unreadCount.mention > 0 && `(${unreadCount.mention})`}
         </button>
       </div>
 
@@ -301,7 +303,7 @@ export default function NotificationsPage() {
       <div className="p-4">
         {getFilteredNotifications().length === 0 ? (
           <div className="text-center text-gray-400 py-8">
-            Aucune notification {activeFilter !== 'all' && `de type ${activeFilter}`}
+            {activeFilter === 'all' ? t('noNotifications') : `${t('noNotificationsOfType')} ${activeFilter}`}
           </div>
         ) : (
           getFilteredNotifications().map((notification) => (
@@ -310,6 +312,8 @@ export default function NotificationsPage() {
               notification={notification}
               onDelete={handleDeleteNotification}
               onMarkAsRead={handleMarkAsRead}
+              t={t}
+              language={language}
             />
           ))
         )}

@@ -84,7 +84,28 @@ const translations = {
     unsubscribe: "Se désabonner",
     subscriptions: "Abonnements",
     noSubscriptions: "Aucun abonnement",
-    noFollowers: "Aucun abonné"
+    noFollowers: "Aucun abonné",
+    
+    // Notifications
+    notifications: "Notifications",
+    newFollower: "Nouveau follower",
+    newLike: "Nouveau like",
+    newComment: "Nouveau commentaire",
+    newMention: "Nouvelle mention",
+    newFollowerText: "Vous avez un nouvel abonné",
+    likeText: "Quelqu'un a aimé votre post",
+    commentText: "Quelqu'un a commenté votre post",
+    mentionText: "Quelqu'un vous a mentionné dans son post",
+    markAllAsRead: "Tout marquer comme lu",
+    deleteNotification: "Supprimer la notification",
+    all: "Toutes",
+    likes: "Likes",
+    mentions: "Mentions",
+    connectingText: "Connexion en cours...",
+    loadingNotifications: "Chargement des notifications...",
+    noNotifications: "Aucune notification",
+    noNotificationsOfType: "Aucune notification de type",
+    user: "utilisateur"
   },
   en: {
     // Navigation
@@ -166,7 +187,28 @@ const translations = {
     unsubscribe: "Unsubscribe",
     subscriptions: "Subscriptions",
     noSubscriptions: "No subscriptions",
-    noFollowers: "No followers"
+    noFollowers: "No followers",
+    
+    // Notifications
+    notifications: "Notifications",
+    newFollower: "New follower",
+    newLike: "New like",
+    newComment: "New comment",
+    newMention: "New mention",
+    newFollowerText: "You have a new follower",
+    likeText: "Someone liked your post",
+    commentText: "Someone commented on your post",
+    mentionText: "Someone mentioned you in their post",
+    markAllAsRead: "Mark all as read",
+    deleteNotification: "Delete notification",
+    all: "All",
+    likes: "Likes",
+    mentions: "Mentions",
+    connectingText: "Connecting...",
+    loadingNotifications: "Loading notifications...",
+    noNotifications: "No notifications",
+    noNotificationsOfType: "No notifications of type",
+    user: "user"
   }
 };
 
