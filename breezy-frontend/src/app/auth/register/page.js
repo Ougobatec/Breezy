@@ -121,7 +121,7 @@ export default function RegisterPage() {
                     >
                     <Image src="/google.svg" alt="Google" width={20} height={20} className="w-5 h-5" />
                     <img src="/google.svg" alt="Google" className="w-5 h-5" />
-                    S'inscrire avec Google
+                    S&apos;inscrire avec Google
                 </button>
                 <span className="text-center text-gray-400">ou</span>
                 <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
