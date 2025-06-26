@@ -43,18 +43,9 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     };
 
     const handleDeletePost = async () => {
-    if (isDeleting) return;
-    if (!window.confirm(t('deletePostConfirm'))) return;
-    
-    setIsDeleting(true);
-    try {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "include", // <-- Ajoute cette ligne
-        });
+        if (isDeleting) return;
+        if (!window.confirm(t('deletePostConfirm'))) return;
         
-<<<<<<< dev
         setIsDeleting(true);
         try {
             const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
@@ -69,18 +60,10 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 alert(t('deleteError'));
             }
         } catch (error) {
-=======
-        if (response.ok && onDeletePost) {
-            onDeletePost(postId);
-        } else {
->>>>>>> Fx18-Ajout-d’images-aux-messages
             alert(t('deleteError'));
         }
-    } catch (error) {
-        alert(t('deleteError'));
-    }
-    setIsDeleting(false);
-    setShowMenu(false);
+        setIsDeleting(false);
+        setShowMenu(false);
     };
 
     const toggleMenu = () => {
