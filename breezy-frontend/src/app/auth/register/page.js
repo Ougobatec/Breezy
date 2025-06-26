@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import Image from "next/image";
+import googlesvg from "@/app/google.svg"; // Assurez-vous que le chemin est correct
 
 export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
@@ -119,8 +120,8 @@ export default function RegisterPage() {
                     className="bg-white border border-gray-300 rounded-lg py-2 px-4 flex items-center justify-center gap-2 hover:bg-gray-50"
                     disabled={loading}
                     >
-                    <Image src="/google.svg" alt="Google" width={20} height={20} className="w-5 h-5" />
-                    <img src="/google.svg" alt="Google" className="w-5 h-5" />
+                    <Image src={googlesvg} alt="Google" width={20} height={20} className="w-5 h-5" />
+                    
                     S&apos;inscrire avec Google
                 </button>
                 <span className="text-center text-gray-400">ou</span>
