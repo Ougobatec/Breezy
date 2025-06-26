@@ -99,7 +99,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             <div className="flex items-center p-3.5">
                 {post.user_id?.avatar ? (
                     <Image
-                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.user_id.avatar}`}
+                        src={post.user_id.avatar.startsWith("http") ? post.user_id.avatar : `${process.env.NEXT_PUBLIC_BACKEND_URL}${post.user_id.avatar}`}
                         alt="Avatar"
                         width={40}
                         height={40}
