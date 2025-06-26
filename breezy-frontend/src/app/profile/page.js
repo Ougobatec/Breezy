@@ -252,7 +252,14 @@ export default function ProfilePage() {
                         </div>
                     ) : (
                         <button
-                            onClick={() => setEditing(true)}
+                            onClick={() => {
+                                // Initialiser le formulaire avec les valeurs actuelles avant d'entrer en mode édition
+                                setForm({
+                                    name: user.name || "",
+                                    bio: user.biography || ""
+                                });
+                                setEditing(true);
+                            }}
                             className="text-red-600 font-semibold text-sm ml-2"
                         >
                             {t('edit')}
