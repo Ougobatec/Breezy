@@ -114,7 +114,7 @@ export default function SearchPage() {
 
     // Naviguer vers le profil d'un utilisateur
     const handleUserClick = (userId) => {
-        router.push(`/user/${userId}`);
+        router.push(`/users/${userId}`);
     };
 
     if (loading) return <LoadingScreen text="Connexion en cours..." />;
