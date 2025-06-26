@@ -28,12 +28,17 @@ const postController = {
             media = `/uploads/posts/${filename}`;
         }
 
-        const tags = req.body["tags[]"]
-            ? Array.isArray(req.body["tags[]"])
-                ? req.body["tags[]"]
-                : [req.body["tags[]"]]
-            : [];
-
+        let tags = [];
+        if (req.body["tags"]) {
+            tags = Array.isArray(req.body["tags"])
+                ? req.body["tags"]
+                : [req.body["tags"]];
+            tags = tags
+                .map(t => (typeof t === "string" ? t.trim() : ""))
+                .filter(t => t)
+                .filter((t, i, arr) => arr.indexOf(t) === i);
+        }
+        console.log("tags reçu :", req.body["tags"]);
         const post = new PostModel({ content, user_id: userId, media, tags });
         await post.save();
         res.status(201).json({ message: "Post créé avec succès", post });
