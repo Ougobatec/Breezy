@@ -2,12 +2,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import PrimaryButton from "@/components/PrimaryButton";
 
 export default function PublishPage() {
   const { user, token } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [content, setContent] = useState("");
   const [tag, setTag] = useState("");
@@ -55,12 +57,12 @@ export default function PublishPage() {
       );
       if (!res.ok) {
         const data = await res.json();
-        setError(data.message || "Erreur lors de la publication.");
+        setError(data.message || t('publishError'));
       } else {
         router.replace("/home");
       }
     } catch (e) {
-      setError("Erreur lors de la publication.");
+      setError(t('publishError'));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export default function PublishPage() {
   if (!user) return null;
 
   return (
-    <Layout headerProps={{ title: "Publier un post", showButtons: false }}>
+    <Layout headerProps={{ title: t('publishPost'), showButtons: false }}>
       <div className="space-y-4 p-4">
         <form
           onSubmit={handleSubmit}
@@ -126,7 +128,7 @@ export default function PublishPage() {
                 unoptimized
               />
             ) : (
-              <span style={{ color: "var(--text-secondary)" }}>Ajouter une image</span>
+              <span style={{ color: "var(--text-secondary)" }}>{t('addImage')}</span>
             )}
             <input
               id="image-upload"
@@ -142,7 +144,7 @@ export default function PublishPage() {
             <textarea
               className="w-full rounded-xl border px-3 py-3 text-sm"
               style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
-              placeholder="Rédiger un post"
+              placeholder={t('writePost')}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={3}
@@ -154,7 +156,7 @@ export default function PublishPage() {
               <input
                 className="w-full rounded-xl border p-3 text-sm"
                 style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
-                placeholder="Ajouter un tag"
+                placeholder={t('addTag')}
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
               />
@@ -164,7 +166,7 @@ export default function PublishPage() {
                 className="p-3 rounded-xl text-sm border cursor-pointer"
                 style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
               >
-                <Image src="/plus-grey.svg" alt="Ajouter un tag" width={24} height={24} />
+                <Image src="/plus-grey.svg" alt={t('addTag')} width={24} height={24} />
               </button>
             </div>
             <div className="flex gap-1 flex-wrap text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -179,7 +181,7 @@ export default function PublishPage() {
                     type="button"
                     className="mx-1 w-4 h-4 rounded-full cursor-pointer"
                     style={{ backgroundColor: "var(--primary)", color: "var(--text-inverted)" }}
-                    title="Supprimer le tag"
+                    title={t('removeTag')}
                     onClick={() => handleRemoveTag(t)}
                   >
                     ×
@@ -194,7 +196,7 @@ export default function PublishPage() {
               type="submit"
               disabled={loading}
             >
-              {loading ? "Publication..." : "Publier"}
+              {loading ? t('publishing') : t('publish')}
             </PrimaryButton>
           </div>
         </form>
