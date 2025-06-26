@@ -68,6 +68,12 @@ const authController = {
             if (!user) {
                 return res.status(400).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
             }
+            
+            // Vérifier si l'utilisateur est banni
+            if (user.banned) {
+                return res.status(403).json({ message: "Votre compte a été banni" });
+            }
+            
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 return res.status(400).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
@@ -82,7 +88,19 @@ const authController = {
                 maxAge: 3600 * 1000, // 1h
             });
     
-            res.status(200).json({ user: { id: user._id, name: user.name, username: user.username, email: user.email } });
+            res.status(200).json({ 
+                user: { 
+                    id: user._id, 
+                    name: user.name, 
+                    username: user.username, 
+                    email: user.email,
+                    role: user.role,
+                    suspended: user.suspended,
+                    banned: user.banned,
+                    avatar: user.avatar,
+                    biography: user.biography
+                } 
+            });
         } catch (error) {
             console.error("Erreur lors de la connexion :", error);
             res.status(500).json({ message: "Erreur interne du serveur" });
@@ -100,7 +118,27 @@ const authController = {
             if (!user) {
                 return res.status(404).json({ message: "Utilisateur introuvable" });
             }
-            res.status(200).json({ message: "Utilisateur authentifié avec succès", user });
+            
+            // Vérifier si l'utilisateur est banni
+            if (user.banned) {
+                res.clearCookie("token");
+                return res.status(403).json({ message: "Votre compte a été banni" });
+            }
+            
+            res.status(200).json({ 
+                message: "Utilisateur authentifié avec succès", 
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    suspended: user.suspended,
+                    banned: user.banned,
+                    avatar: user.avatar,
+                    biography: user.biography
+                }
+            });
         } catch (error) {
             console.error("Erreur lors de l'authentification :", error);
             res.status(500).json({ message: "Erreur interne du serveur" });

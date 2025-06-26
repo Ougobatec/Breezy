@@ -1,5 +1,6 @@
 import Comment from "#models/comment.js";
 import PostModel from "#models/post.js";
+import UserModel from "#models/user.js";
 import notificationController from "#controllers/notification.js";
 
 // Créer un commentaire principal
@@ -9,6 +10,20 @@ export const createComment = async (req, res) => {
     const userId = req.user.userId;
 
     try {
+        // Vérifier le statut de l'utilisateur
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+        
+        if (user.suspended) {
+            return res.status(403).json({ message: "Vous ne pouvez pas commenter car votre compte est suspendu" });
+        }
+        
+        if (user.banned) {
+            return res.status(403).json({ message: "Vous ne pouvez pas commenter car votre compte est banni" });
+        }
+
         const comment = new Comment({
             post_id: postId,
             user_id: userId,
@@ -49,6 +64,20 @@ export const replyToComment = async (req, res) => {
     const userId = req.user.userId;
 
     try {
+        // Vérifier le statut de l'utilisateur
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+        
+        if (user.suspended) {
+            return res.status(403).json({ message: "Vous ne pouvez pas répondre car votre compte est suspendu" });
+        }
+        
+        if (user.banned) {
+            return res.status(403).json({ message: "Vous ne pouvez pas répondre car votre compte est banni" });
+        }
+
         // Créer la réponse
         const reply = new Comment({
             post_id: postId,
@@ -124,20 +153,59 @@ export const getCommentsByPost = async (req, res) => {
 // Supprimer un commentaire (et ses réponses)
 export const deleteComment = async (req, res) => {
     const commentId = req.params.commentId;
+    const userId = req.user.userId;
+
     try {
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: "Commentaire non trouvé" });
+        }
+
+        // Récupérer les informations de l'utilisateur pour vérifier son rôle
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+
+        // Vérifier les permissions de suppression
+        const isOwner = comment.user_id.toString() === userId;
+        const isModerator = user.role === 'moderator' || user.role === 'admin';
+        
+        if (!isOwner && !isModerator) {
+            return res.status(403).json({ message: "Vous n'êtes pas autorisé à supprimer ce commentaire" });
+        }
+
+        // Si c'est un modérateur/admin qui supprime le commentaire d'un autre utilisateur,
+        // créer une notification pour informer l'auteur original
+        if (!isOwner && isModerator) {
+            try {
+                await notificationController.createNotification(
+                    comment.user_id,
+                    'moderation',
+                    userId,
+                    `Votre commentaire a été supprimé par un ${user.role === 'admin' ? 'administrateur' : 'modérateur'}`,
+                    comment.post_id
+                );
+            } catch (notificationError) {
+                console.error("Erreur lors de la création de la notification de modération:", notificationError);
+            }
+        }
+
         // Supprimer le commentaire et toutes ses réponses récursivement
         const deleteCommentAndReplies = async (id) => {
-            const comment = await Comment.findById(id);
-            if (comment && comment.replies.length > 0) {
-                for (const replyId of comment.replies) {
+            const commentToDelete = await Comment.findById(id);
+            if (commentToDelete && commentToDelete.replies.length > 0) {
+                for (const replyId of commentToDelete.replies) {
                     await deleteCommentAndReplies(replyId);
                 }
             }
             await Comment.findByIdAndDelete(id);
         };
+        
         await deleteCommentAndReplies(commentId);
         res.status(200).json({ message: "Commentaire supprimé" });
     } catch (error) {
+        console.error("Error in deleteComment:", error);
         res.status(500).json({ message: "Erreur lors de la suppression", error: error.message });
     }
 };

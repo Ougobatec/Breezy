@@ -27,6 +27,9 @@ export default function PublishPage() {
   const fileInputRef = useRef();
   const [originalImage, setOriginalImage] = useState(null);
 
+  // Vérifier si l'utilisateur peut publier
+  const canPublish = user && !user.suspended && !user.banned;
+
 
   const handleImageChange = (e) => {
   const file = e.target.files[0];
@@ -93,6 +96,36 @@ export default function PublishPage() {
   };
 
   if (!user) return null;
+
+  // Si l'utilisateur est suspendu ou banni, afficher un message
+  if (!canPublish) {
+    return (
+      <Layout headerProps={{ title: t("publishPost"), showButtons: false }}>
+        <div className="p-4">
+          <div className="bg-red-100 border-l-4 border-red-500 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-red-500 text-xl">🚫</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  <strong>
+                    {user.banned ? 'Compte banni' : 'Compte suspendu'}
+                  </strong>
+                </p>
+                <p className="text-sm text-red-600 mt-1">
+                  {user.banned 
+                    ? 'Votre compte a été banni. Vous ne pouvez plus publier de contenu.'
+                    : 'Votre compte est suspendu. Vous ne pouvez pas publier de contenu jusqu\'à ce que la suspension soit levée.'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout headerProps={{ title: t("publishPost"), showButtons: false }}>

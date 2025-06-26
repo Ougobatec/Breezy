@@ -29,7 +29,7 @@ import routeurAuth from '#routes/auth.js'
 import routeurUser from '#routes/user.js'
 import routerComment from '#routes/comment.js'
 import routerNotification from '#routes/notification.js'
-
+import routerAdmin from '#routes/admin.js'
 import routerSearch from '#routes/search.js'
 
 app.use('/uploads/avatars', express.static('/uploads/avatars'))
@@ -44,7 +44,7 @@ app.use('/users', routeurUser);
 app.use('/sub', routerSub);
 app.use('/comments', routerComment);
 app.use('/notifications', routerNotification);
-
+app.use('/admin', routerAdmin);
 app.use('/search', routerSearch);
 
 
