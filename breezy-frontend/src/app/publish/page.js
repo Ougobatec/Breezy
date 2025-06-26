@@ -71,7 +71,11 @@ export default function PublishPage() {
     try {
       const formData = new FormData();
       formData.append("content", content);
-      tags.forEach((t) => formData.append("tags[]", t));
+      if (tags.length === 0) {
+        formData.append("tags", "");
+      } else {
+        tags.forEach((t) => formData.append("tags", t));
+      }
       if (image) formData.append("image", image);
 
       const res = await fetch(
@@ -206,7 +210,7 @@ export default function PublishPage() {
                   }}
                   className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
                 >
-                  Changer d'image
+                  Changer d&apos;image
                 </button>
               </div>
             ) : imagePreview ? (
@@ -242,7 +246,7 @@ export default function PublishPage() {
                   }}
                   className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
                 >
-                  Changer d'image
+                  Changer d&apos;image
                 </button>
               </div>
             ) : (
