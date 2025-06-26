@@ -13,6 +13,7 @@ const postController = {
 
         // Si une image est envoyée
         if (req.file) {
+
             // Créer le dossier uploads/posts s'il n'existe pas
             const postsDir = path.join("uploads", "posts");
             if (!fs.existsSync(postsDir)) {
@@ -22,6 +23,7 @@ const postController = {
             const ext = path.extname(req.file.originalname);
             const filename = `${Date.now()}_${userId}${ext}`;
             const destPath = path.join(postsDir, filename);
+
             fs.writeFileSync(destPath, req.file.buffer);
             media = `/uploads/posts/${filename}`;
         }

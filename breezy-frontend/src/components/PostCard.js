@@ -13,6 +13,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     const [showMenu, setShowMenu] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showComments, setShowComments] = useState(false);
+    const [showShareMessage, setShowShareMessage] = useState(false);
 
     const postId = post._id || post.id;
     const isLiked =
@@ -43,16 +44,8 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     };
 
     const handleDeletePost = async () => {
-    if (isDeleting) return;
-    if (!window.confirm(t('deletePostConfirm'))) return;
-    
-    setIsDeleting(true);
-    try {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "include", // <-- Ajoute cette ligne
-        });
+        if (isDeleting) return;
+        if (!window.confirm(t('deletePostConfirm'))) return;
         
         setIsDeleting(true);
         try {
@@ -68,18 +61,22 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 alert(t('deleteError'));
             }
         } catch (error) {
-
             alert(t('deleteError'));
         }
-    } catch (error) {
-        alert(t('deleteError'));
-    }
-    setIsDeleting(false);
-    setShowMenu(false);
+        setIsDeleting(false);
+        setShowMenu(false);
     };
 
     const toggleMenu = () => {
         setShowMenu(!showMenu);
+    };
+
+    const handleShare = () => {
+        setShowShareMessage(true);
+        // Faire disparaître le message après 3 secondes
+        setTimeout(() => {
+            setShowShareMessage(false);
+        }, 3000);
     };
 
     // Fermer le menu si on clique ailleurs
@@ -226,13 +223,23 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                     className="p-1"
                 />
                 <IconButton
-                    href={`/posts/${postId}/shares`}
+                    onClick={handleShare}
                     icon="share.svg"
                     alt="Share"
                     size={24}
                     className="p-1"
                 />
             </div>
+
+            {/* Message temporaire pour le partage */}
+            {showShareMessage && (
+                <div 
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm z-50 cursor-pointer"
+                    onClick={() => setShowShareMessage(false)}
+                >
+                    Cette fonctionnalité n'est pas disponible pour le moment
+                </div>
+            )}
 
             {/* Drawer des commentaires : slide up depuis sous la carte */}
            <div
