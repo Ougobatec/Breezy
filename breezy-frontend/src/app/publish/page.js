@@ -24,35 +24,53 @@ export default function PublishPage() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const ffmpeg = useRef(null);
   const fileInputRef = useRef();
   const [originalImage, setOriginalImage] = useState(null);
   const [video, setVideo] = useState(null);
+  const [videoFrame, setVideoFrame] = useState(null);
 
   function handleMediaChange(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (file.type.startsWith("image/")) {
-    setVideo(null); // <-- Ajoute ceci pour éviter d'uploader une vidéo en même temps
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.type.startsWith("image/")) {
+      setVideo(null);
+      setVideoFrame(null);
+      setOriginalImage(file);
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setShowCropper(true);
+    } else if (file.type.startsWith("video/")) {
+      setImage(null);
+      setOriginalImage(null);
+      setImagePreview(URL.createObjectURL(file));
+      setShowCropper(false);
+      setVideo(file);
+      // Générer la première frame pour le cropper
+      const videoUrl = URL.createObjectURL(file);
+      const videoEl = document.createElement('video');
+      videoEl.src = videoUrl;
+      videoEl.currentTime = 0.1;
+      videoEl.crossOrigin = 'anonymous';
+      videoEl.addEventListener('loadeddata', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        setVideoFrame(canvas.toDataURL('image/jpeg'));
+        URL.revokeObjectURL(videoUrl);
+      });
+    }
+  }
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
     setOriginalImage(file);
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
     setShowCropper(true);
-  } else if (file.type.startsWith("video/")) {
-    setImage(null);
-    setOriginalImage(null);
-    setImagePreview(URL.createObjectURL(file));
-    setShowCropper(false);
-    setVideo(file);
-  }
-}
-  const handleImageChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  setOriginalImage(file);
-  setImage(file);
-  setImagePreview(URL.createObjectURL(file));
-  setShowCropper(true);
-};
+  };
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -169,12 +187,13 @@ export default function PublishPage() {
             style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
           >
             {video && imagePreview ? (
-              <div className="relative w-full h-full">
+              // Affichage simple de la vidéo, sans cropper
+              <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
                 <video
                   src={imagePreview}
                   controls
                   className="object-cover w-full h-full rounded-xl"
-                  style={{ width: "100%", height: "100%" }}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                 />
                 <button
                   type="button"
