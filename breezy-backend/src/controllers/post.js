@@ -243,17 +243,21 @@ const postController = {
             // Notifier les modérateurs si le post a plusieurs signalements
             if (post.reports.length >= 3) {
                 try {
+                    console.log(`Post ${postId} a atteint ${post.reports.length} signalements, notification des modérateurs...`);
+                    
                     // Trouver tous les modérateurs et admins
                     const moderators = await UserModel.find({ role: { $in: ['moderator', 'admin'] } });
+                    console.log(`${moderators.length} modérateurs/admins trouvés:`, moderators.map(m => `${m.username} (${m.role})`));
                     
                     for (const moderator of moderators) {
-                        await notificationController.createNotification(
+                        const notification = await notificationController.createNotification(
                             moderator._id,
                             'report',
                             userId,
                             `Un post a été signalé ${post.reports.length} fois et nécessite une modération`,
                             postId
                         );
+                        console.log(`Notification créée pour ${moderator.username}:`, notification?._id);
                     }
                 } catch (notificationError) {
                     console.error("Erreur lors de la notification des modérateurs:", notificationError);

@@ -271,6 +271,47 @@ const adminController = {
             console.error("Error in getModerationStats:", error);
             res.status(500).json({ message: "Erreur lors de la récupération des statistiques", error: error.message });
         }
+    },
+
+    // Test de notification (pour déboguer)
+    testNotification: async (req, res) => {
+        try {
+            const adminId = req.user.userId;
+            
+            // Créer une notification de test
+            const notification = await notificationController.createNotification(
+                adminId,
+                'report',
+                adminId,
+                'Test de notification de signalement',
+                null
+            );
+            
+            res.status(200).json({ 
+                message: "Notification de test créée",
+                notification 
+            });
+        } catch (error) {
+            console.error("Error in testNotification:", error);
+            res.status(500).json({ message: "Erreur lors du test de notification", error: error.message });
+        }
+    },
+
+    // Vérifier les modérateurs et admins
+    checkModerators: async (req, res) => {
+        try {
+            const moderators = await UserModel.find({ role: { $in: ['moderator', 'admin'] } })
+                .select('username name email role')
+                .lean();
+            
+            res.status(200).json({ 
+                message: `${moderators.length} modérateur(s) et administrateur(s) trouvé(s)`,
+                moderators 
+            });
+        } catch (error) {
+            console.error("Error in checkModerators:", error);
+            res.status(500).json({ message: "Erreur lors de la vérification", error: error.message });
+        }
     }
 };
 
