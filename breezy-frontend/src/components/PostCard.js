@@ -51,9 +51,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
             const response = await fetch(url, {
                 method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: "include",
             });
             
             if (response.ok && onDeletePost) {
