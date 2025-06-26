@@ -4,17 +4,20 @@ import LoadingScreen from "@/components/LoadingScreen";
 import Layout from "@/components/Layout";
 import PostCard from "@/components/PostCard";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
     const { user, token, login, loading } = useAuth();
+    const { t } = useLanguage();
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({ name: "", bio: "" });
     const [posts, setPosts] = useState([]);
     const [postsLoading, setPostsLoading] = useState(true);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [removeAvatar, setRemoveAvatar] = useState(false);
+    const [profileRefresh, setProfileRefresh] = useState(0);
     const fileInputRef = useRef(null);
     const router = useRouter();
 
@@ -27,10 +30,10 @@ export default function ProfilePage() {
             .then(res => res.json())
             .then(data => setForm({
                 name: data.name || user?.name || "",
-                bio: data.biography || ""
+                bio: data.biography || user?.biography || ""
             }))
-            .catch(() => setForm({ name: user?.name || "", bio: "" }));
-    }, [token, user?.name]);
+            .catch(() => setForm({ name: user?.name || "", bio: user?.biography || "" }));
+    }, [token, user?.name, user?.biography, profileRefresh]);
 
     // Récupération des posts (filtrage côté client si besoin, fallback si l'API ne supporte pas userId)
     useEffect(() => {
@@ -70,22 +73,47 @@ export default function ProfilePage() {
 
     // Sauvegarde du profil (nom, bio, avatar)
     const handleProfileUpdate = async () => {
-        const formData = new FormData();
-        formData.append("name", form.name);
-        formData.append("biography", form.bio);
-        if (fileInputRef.current && fileInputRef.current.files[0]) {
-            formData.append("avatar", fileInputRef.current.files[0]);
+        try {
+            const formData = new FormData();
+            formData.append("name", form.name);
+            formData.append("bio", form.bio);
+            if (fileInputRef.current && fileInputRef.current.files[0]) {
+                formData.append("avatar", fileInputRef.current.files[0]);
+            }
+            formData.append("removeAvatar", removeAvatar ? "true" : "false");
+            
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
+                method: "PUT",
+                body: formData,
+                credentials: "include",
+            });
+            
+            if (response.ok) {
+                // Récupérer les données mises à jour
+                const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
+                    credentials: "include",
+                });
+                const profileData = await profileResponse.json();
+                
+                // Mettre à jour le formulaire avec les nouvelles données
+                setForm({
+                    name: profileData.name || "",
+                    bio: profileData.biography || ""
+                });
+                
+                // Rafraîchir les données utilisateur dans l'AuthContext
+                await login();
+                
+                setEditing(false);
+                setAvatarPreview(null);
+                setRemoveAvatar(false);
+                
+                // Forcer le rechargement des données du profil
+                setProfileRefresh(prev => prev + 1);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour du profil:", error);
         }
-        formData.append("removeAvatar", removeAvatar ? "true" : "false");
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
-            method: "PUT",
-            body: formData,
-            credentials: "include",
-        });
-        setEditing(false);
-        setAvatarPreview(null);
-        setRemoveAvatar(false);
-        router.replace(router.asPath); // Rafraîchit la page sans reload complet
     };
 
     // Suppression d'un post
@@ -96,14 +124,23 @@ export default function ProfilePage() {
     // Reset du formulaire
     const handleCancel = () => {
         setEditing(false);
-        setForm({ name: user.name || "", bio: "" });
+        // Récupérer les données actuelles au lieu de remettre à vide
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/profile`, {
+            credentials: "include",
+        })
+            .then(res => res.json())
+            .then(data => setForm({
+                name: data.name || user?.name || "",
+                bio: data.biography || user?.biography || ""
+            }))
+            .catch(() => setForm({ name: user?.name || "", bio: user?.biography || "" }));
         setAvatarPreview(null);
         setRemoveAvatar(false);
     };
 
     if (!user) return null;
-    if (loading) return <LoadingScreen text="Chargement de la page..." />;
-    if (postsLoading) return <LoadingScreen text="Chargement des posts..." />;
+    if (loading) return <LoadingScreen text={t('loadingProfile')} />;
+    if (postsLoading) return <LoadingScreen text={t('loadingPosts')} />;
 
     // Avatar à afficher
     const avatarSrc = avatarPreview
@@ -111,7 +148,7 @@ export default function ProfilePage() {
         || null;
 
     return (
-        <Layout headerProps={{ title: user.name || "Profil", showButtons: true }}>
+        <Layout headerProps={{ title: user.name || t('profile'), showButtons: true }}>
             <div className="p-4">
                 <div className="flex items-center">
                     <div className="relative w-20 h-20">
@@ -139,7 +176,7 @@ export default function ProfilePage() {
                                 <label
                                     htmlFor="avatar-upload"
                                     className="absolute bottom-0 right-0 bg-white border rounded-full p-1 shadow cursor-pointer hover:bg-gray-100"
-                                    title="Changer l'avatar"
+                                    title={t('changeAvatar')}
                                     style={{ lineHeight: 0 }}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,7 +196,7 @@ export default function ProfilePage() {
                                     <button
                                         type="button"
                                         className="absolute top-0 right-0 bg-white border rounded-full p-1 shadow cursor-pointer hover:bg-gray-100"
-                                        title="Supprimer la photo"
+                                        title={t('deletePhoto')}
                                         style={{ lineHeight: 0, zIndex: 10 }}
                                         onClick={handleAvatarDelete}
                                     >
@@ -193,7 +230,7 @@ export default function ProfilePage() {
                                 <span className="font-bold text-base text-gray-800">{user.name || "Name"}</span>
                                 <span className="text-xs text-gray-400">@{user.username || "username"}</span>
                                 <p className="text-xs text-gray-600 mt-2">
-                                    {form.bio || "Ajoutez une bio à votre profil."}
+                                    {user.biography || form.bio || "Ajoutez une bio à votre profil."}
                                 </p>
                             </>
                         )}
@@ -204,13 +241,13 @@ export default function ProfilePage() {
                                 onClick={handleProfileUpdate}
                                 className="px-3 py-1 bg-blue-500 text-white rounded text-xs"
                             >
-                                Sauvegarder
+                                {t('save')}
                             </button>
                             <button
                                 onClick={handleCancel}
                                 className="px-3 py-1 bg-gray-200 rounded text-xs"
                             >
-                                Annuler
+                                {t('cancel')}
                             </button>
                         </div>
                     ) : (
@@ -218,33 +255,33 @@ export default function ProfilePage() {
                             onClick={() => setEditing(true)}
                             className="text-red-600 font-semibold text-sm ml-2"
                         >
-                            Modifier
+                            {t('edit')}
                         </button>
                     )}
                 </div>
                 <div className="flex justify-around mt-4 text-center text-xs text-gray-600">
                     <div>
                         <div className="font-semibold text-gray-800">{user.postsCount ?? posts.length ?? 0}</div>
-                        <div>Posts</div>
+                        <div>{t('posts')}</div>
                     </div>
                     <div>
                         <div className="font-semibold text-gray-800">{user.followersCount ?? "10K"}</div>
-                        <div>Abonnés</div>
+                        <div>{t('followers')}</div>
                     </div>
                     <div>
                         <div className="font-semibold text-gray-800">{user.followingCount ?? "10K"}</div>
-                        <div>Abonnements</div>
+                        <div>{t('following')}</div>
                     </div>
                 </div>
             </div>
             <div className="text-xl font-bold p-4">
-                Posts
+                {t('posts')}
             </div>
             <div className="space-y-4 px-4 pb-4">
                 {postsLoading ? (
-                    <div className="text-center text-gray-400">Chargement des posts...</div>
+                    <div className="text-center text-gray-400">{t('loadingPosts')}</div>
                 ) : posts.length === 0 ? (
-                    <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Aucun post à afficher.</div>
+                    <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>{t('noPostsMessage')}</div>
                 ) : (
                     (Array.isArray(posts) ? posts : [])
                         .sort(

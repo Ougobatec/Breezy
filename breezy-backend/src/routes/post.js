@@ -17,8 +17,10 @@ postRouter.get("/", authMiddleware, postController.getAllPosts);
 postRouter.put("/:id/like", authMiddleware, postController.likePost);
 postRouter.get("/:id/like", authMiddleware, postController.getPostLikes);
 
+// Route pour supprimer un post
+postRouter.delete("/:id", authMiddleware, postController.deletePost);
+
 // Route pour récupérer le flux de posts
 postRouter.get("/flow", authMiddleware, postController.getFlowPosts);
-
 
 export default postRouter;

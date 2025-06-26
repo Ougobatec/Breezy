@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import Comments from "@/components/Comments";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PostCard({ post, token, currentUser, onLikeUpdate, onDeletePost, showDeleteOption = false }) {
+    const { t, language } = useLanguage();
     const [pop, setPop] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -42,7 +44,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
 
     const handleDeletePost = async () => {
         if (isDeleting) return;
-        if (!window.confirm("Voulez-vous vraiment supprimer ce post ?")) return;
+        if (!window.confirm(t('deletePostConfirm'))) return;
         
         setIsDeleting(true);
         try {
@@ -57,10 +59,10 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
             if (response.ok && onDeletePost) {
                 onDeletePost(postId);
             } else {
-                alert("Erreur lors de la suppression du post.");
+                alert(t('deleteError'));
             }
         } catch (error) {
-            alert("Erreur lors de la suppression du post.");
+            alert(t('deleteError'));
         }
         setIsDeleting(false);
         setShowMenu(false);
@@ -125,14 +127,14 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                     </Link>
                     <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
                         {post.created_at
-                            ? new Date(post.created_at).toLocaleString("fr-FR", {
+                            ? new Date(post.created_at).toLocaleString(language === 'fr' ? "fr-FR" : "en-US", {
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 year: "numeric",
                                 month: "2-digit",
                                 day: "2-digit",
                             })
-                            : "Date inconnue"}
+                            : t('unknownDate')}
                     </div>
                 </div>
                 <div className="relative post-menu">
@@ -151,7 +153,7 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                                 onClick={handleDeletePost}
                                 disabled={isDeleting}
                             >
-                                {isDeleting ? "Suppression..." : "Supprimer"}
+                                {isDeleting ? `${t('delete')}...` : t('delete')}
                             </button>
                         </div>
                     )}

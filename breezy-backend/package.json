@@ -43,10 +43,10 @@
     "nodemon": "^3.1.10"
   },
   "imports": {
-    "#*": "./src/*",
-    "#routes*": "./src/routes/*",
-    "#controllers*": "./src/controllers/*",
-    "#models*": "./src/models/*",
-    "#middlewares*": "./src/middlewares/*"
+    "#/*": "./src/*",
+    "#routes/*": "./src/routes/*",
+    "#controllers/*": "./src/controllers/*",
+    "#models/*": "./src/models/*",
+    "#middlewares/*": "./src/middlewares/*"
   }
 }
