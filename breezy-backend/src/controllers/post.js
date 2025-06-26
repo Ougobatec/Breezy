@@ -1,52 +1,76 @@
 import PostModel from "#models/post.js";
 import SubscriptionModel from "#models/subscription.js"
+import UserModel from "#models/user.js";
 import notificationController from "./notification.js";
 import path from "path";
 import fs from "fs";
 
 const postController = {
     createPost: async (req, res) => {
-    try {
-        const { content } = req.body;
-        const userId = req.user.userId;
-        let media = null;
-
-        // Si une image est envoyée
-        if (req.file) {
-
-            // Créer le dossier uploads/posts s'il n'existe pas
-            const postsDir = path.join("uploads", "posts");
-            if (!fs.existsSync(postsDir)) {
-                fs.mkdirSync(postsDir, { recursive: true });
+        try {
+            const { content } = req.body;
+            const userId = req.user.userId;
+            
+            // Vérifier le statut de l'utilisateur
+            const user = await UserModel.findById(userId);
+            if (!user) {
+                return res.status(404).json({ message: "Utilisateur non trouvé" });
             }
-            // Déplacer le fichier dans /uploads/posts
-            const ext = path.extname(req.file.originalname);
-            const filename = `${Date.now()}_${userId}${ext}`;
-            const destPath = path.join(postsDir, filename);
+            
+            if (user.suspended) {
+                return res.status(403).json({ message: "Vous ne pouvez pas publier car votre compte est suspendu" });
+            }
+            
+            if (user.banned) {
+                return res.status(403).json({ message: "Vous ne pouvez pas publier car votre compte est banni" });
+            }
+            
+            let media = null;
 
-            fs.writeFileSync(destPath, req.file.buffer);
-            media = `/uploads/posts/${filename}`;
-        }
+            // Si une image est envoyée
+            if (req.file) {
+                // S'assurer que le dossier uploads existe
+                const uploadsDir = "uploads";
+                if (!fs.existsSync(uploadsDir)) {
+                    fs.mkdirSync(uploadsDir, { recursive: true });
+                }
+                
+                // Déplacer le fichier dans /uploads
+                const ext = path.extname(req.file.originalname);
+                const filename = `${Date.now()}_${userId}${ext}`;
+                const destPath = path.join(uploadsDir, filename);
+                fs.writeFileSync(destPath, req.file.buffer);
+                media = `/${destPath.replace(/\\/g, "/")}`;
+            }
 
-        let tags = [];
-        if (req.body["tags"]) {
-            tags = Array.isArray(req.body["tags"])
-                ? req.body["tags"]
-                : [req.body["tags"]];
+            // Process tags with proper validation and deduplication
+            let tags = [];
+            if (req.body["tags[]"]) {
+                tags = Array.isArray(req.body["tags[]"])
+                    ? req.body["tags[]"]
+                    : [req.body["tags[]"]];
+            } else if (req.body["tags"]) {
+                tags = Array.isArray(req.body["tags"])
+                    ? req.body["tags"]
+                    : [req.body["tags"]];
+            }
+            
+            // Clean and deduplicate tags
             tags = tags
                 .map(t => (typeof t === "string" ? t.trim() : ""))
                 .filter(t => t)
                 .filter((t, i, arr) => arr.indexOf(t) === i);
+            
+            console.log("tags reçu :", tags);
+
+            const post = new PostModel({ content, user_id: userId, media, tags });
+            await post.save();
+            res.status(201).json({ message: "Post créé avec succès", post });
+        } catch (error) {
+            console.error("Erreur lors de la création du post :", error);
+            res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
         }
-        console.log("tags reçu :", req.body["tags"]);
-        const post = new PostModel({ content, user_id: userId, media, tags });
-        await post.save();
-        res.status(201).json({ message: "Post créé avec succès", post });
-    } catch (error) {
-        console.error("Erreur lors de la création du post :", error);
-        res.status(500).json({ message: "Erreur lors de la création du post", error: error.message });
-    }
-},
+    },
 
     // Récupérer tous les posts
     getAllPosts: async (req, res) => {
@@ -163,9 +187,34 @@ const postController = {
                 return res.status(404).json({ message: "Post non trouvé." });
             }
 
-            // Vérifier si l'utilisateur est le propriétaire du post
-            if (post.user_id.toString() !== userId) {
+            // Récupérer les informations de l'utilisateur pour vérifier son rôle
+            const user = await UserModel.findById(userId);
+            if (!user) {
+                return res.status(404).json({ message: "Utilisateur non trouvé." });
+            }
+
+            // Vérifier les permissions de suppression
+            const isOwner = post.user_id.toString() === userId;
+            const isModerator = user.role === 'moderator' || user.role === 'admin';
+            
+            if (!isOwner && !isModerator) {
                 return res.status(403).json({ message: "Vous n'êtes pas autorisé à supprimer ce post." });
+            }
+
+            // Si c'est un modérateur/admin qui supprime le post d'un autre utilisateur,
+            // créer une notification pour informer l'auteur original
+            if (!isOwner && isModerator) {
+                try {
+                    await notificationController.createNotification(
+                        post.user_id,
+                        'moderation',
+                        userId,
+                        `Votre post a été supprimé par un ${user.role === 'admin' ? 'administrateur' : 'modérateur'}`,
+                        postId
+                    );
+                } catch (notificationError) {
+                    console.error("Erreur lors de la création de la notification de modération:", notificationError);
+                }
             }
 
             await PostModel.findByIdAndDelete(postId);
@@ -173,6 +222,66 @@ const postController = {
         } catch (error) {
             console.error("Error in deletePost:", error);
             res.status(500).json({ message: "Erreur lors de la suppression du post", error: error.message });
+        }
+    },
+
+    // Signaler un post (pour les utilisateurs)
+    reportPost: async (req, res) => {
+        const postId = req.params.id;
+        const userId = req.user.userId;
+        const { reason } = req.body;
+
+        try {
+            const post = await PostModel.findById(postId);
+            if (!post) {
+                return res.status(404).json({ message: "Post non trouvé." });
+            }
+
+            // Vérifier si l'utilisateur a déjà signalé ce post
+            if (post.reports && post.reports.some(report => report.user_id.toString() === userId)) {
+                return res.status(400).json({ message: "Vous avez déjà signalé ce post." });
+            }
+
+            // Ajouter le signalement
+            if (!post.reports) {
+                post.reports = [];
+            }
+            post.reports.push({
+                user_id: userId,
+                reason: reason || "Contenu inapproprié",
+                reported_at: new Date()
+            });
+
+            await post.save();
+
+            // Notifier les modérateurs si le post a plusieurs signalements
+            if (post.reports.length >= 3) {
+                try {
+                    console.log(`Post ${postId} a atteint ${post.reports.length} signalements, notification des modérateurs...`);
+                    
+                    // Trouver tous les modérateurs et admins
+                    const moderators = await UserModel.find({ role: { $in: ['moderator', 'admin'] } });
+                    console.log(`${moderators.length} modérateurs/admins trouvés:`, moderators.map(m => `${m.username} (${m.role})`));
+                    
+                    for (const moderator of moderators) {
+                        const notification = await notificationController.createNotification(
+                            moderator._id,
+                            'report',
+                            userId,
+                            `Un post a été signalé ${post.reports.length} fois et nécessite une modération`,
+                            postId
+                        );
+                        console.log(`Notification créée pour ${moderator.username}:`, notification?._id);
+                    }
+                } catch (notificationError) {
+                    console.error("Erreur lors de la notification des modérateurs:", notificationError);
+                }
+            }
+
+            res.status(200).json({ message: "Post signalé avec succès" });
+        } catch (error) {
+            console.error("Error in reportPost:", error);
+            res.status(500).json({ message: "Erreur lors du signalement du post", error: error.message });
         }
     }
 }

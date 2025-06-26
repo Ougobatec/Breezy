@@ -129,6 +129,31 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Section Administration (pour modérateurs et administrateurs) */}
+        {(user?.role === 'moderator' || user?.role === 'admin') && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+              Administration
+            </h2>
+            <button
+              onClick={() => window.location.href = '/admin'}
+              className="w-full p-3 rounded-xl border text-left flex items-center justify-between"
+              style={{ 
+                backgroundColor: 'var(--card)',
+                borderColor: 'var(--border)',
+                color: "var(--text-primary)"
+              }}
+            >
+              <span>
+                {user?.role === 'admin' ? 'Panel Administrateur' : 'Panel Modérateur'}
+              </span>
+              <div className="text-sm opacity-70">
+                {user?.role === 'admin' ? '👑' : '🛡️'}
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Section Compte */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>

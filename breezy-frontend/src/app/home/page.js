@@ -2,6 +2,7 @@
 import LoadingScreen from "@/components/LoadingScreen";
 import Layout from "@/components/Layout";
 import PostCard from "@/components/PostCard";
+import SuspendedUserMessage from "@/components/SuspendedUserMessage";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
@@ -48,6 +49,9 @@ export default function HomePage() {
       <div className="text-xl font-bold p-4">
         {t('welcomeMessage')} {user.name}
       </div>
+      
+      <SuspendedUserMessage />
+      
       <div className="space-y-4 px-4 pb-4">
         {posts.length === 0 ? (
           <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>{t('noPostsMessage')}</div>
