@@ -264,14 +264,20 @@ export default function ProfilePage() {
                         <div className="font-semibold text-gray-800">{user.postsCount ?? posts.length ?? 0}</div>
                         <div>{t('posts')}</div>
                     </div>
-                    <div>
-                        <div className="font-semibold text-gray-800">{user.followersCount ?? "10K"}</div>
+                    <button
+                        onClick={() => router.push('/followers')}
+                        className="hover:bg-gray-50 rounded p-1"
+                    >
+                        <div className="font-semibold text-gray-800">{user.followersCount ?? 0}</div>
                         <div>{t('followers')}</div>
-                    </div>
-                    <div>
-                        <div className="font-semibold text-gray-800">{user.followingCount ?? "10K"}</div>
+                    </button>
+                    <button
+                        onClick={() => router.push('/subscription')}
+                        className="hover:bg-gray-50 rounded p-1"
+                    >
+                        <div className="font-semibold text-gray-800">{user.followingCount ?? 0}</div>
                         <div>{t('following')}</div>
-                    </div>
+                    </button>
                 </div>
             </div>
             <div className="text-xl font-bold p-4">

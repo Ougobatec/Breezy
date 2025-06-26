@@ -308,16 +308,7 @@ export default function NotificationsPage() {
         >
           {t('likes')} {unreadCount.like > 0 && `(${unreadCount.like})`}
         </button>
-        <button
-          onClick={() => setActiveFilter('mention')}
-          className={`px-3 py-1 rounded-full text-sm ${
-            activeFilter === 'mention'
-              ? 'bg-red-500 text-white'
-              : 'bg-white text-gray-600 border'
-          }`}
-        >
-          {t('mentions')} {unreadCount.mention > 0 && `(${unreadCount.mention})`}
-        </button>
+
         <button
           onClick={() => setActiveFilter('comment')}
           className={`px-3 py-1 rounded-full text-sm ${

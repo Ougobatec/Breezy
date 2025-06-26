@@ -1,15 +1,17 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/Header";
+import { useLanguage } from "@/context/LanguageContext";
 import LoadingScreen from "@/components/LoadingScreen";
-import React, { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
-
 import SkeletonAvatar from "@/components/SkeletonAvatar";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 
 export default function SubscriptionPage() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
+  const router = useRouter();
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
   const [targetId, setTargetId] = useState("");
@@ -90,20 +92,18 @@ export default function SubscriptionPage() {
     }
   };
 
-  if (loading) return <LoadingScreen text="Connexion en cours..." />;
+  if (loading) return <LoadingScreen text={t('loading')} />;
   if (!user) return null;
   if (subscriptionsLoading)
-    return <LoadingScreen text="Chargement des abonnements" />;
+    return <LoadingScreen text={t('loadingSubscriptions')} />;
 
   return (
-    <Layout headerProps={{ title: "Abonements" }}>
-
-       <Header title="Abonnements" showButtons={true} />
+    <Layout headerProps={{ title: t('following') }}>
       <div className="px-4 py-2">
         <div className="mb-4 flex gap-2">
           <input
             type="text"
-            placeholder="ID utilisateur à suivre"
+            placeholder={t('userIdToFollow')}
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
             className="border px-2 py-1 rounded"
@@ -112,7 +112,7 @@ export default function SubscriptionPage() {
             onClick={handleSubscribe}
             className="bg-blue-500 text-white px-3 py-1 rounded"
           >
-            S&apos;abonner
+            {t('subscribe')}
           </button>
           {subscribeMsg && (
             <span className="ml-2 text-sm">{subscribeMsg}</span>
@@ -120,12 +120,12 @@ export default function SubscriptionPage() {
         </div>
         <input
           type="text"
-          placeholder="Rechercher"
+          placeholder={t('search')}
           className="w-full mb-4 rounded-xl bg-gray-100 px-4 py-2 text-gray-500 outline-none"
         />
         <div className="space-y-3">
           {subscriptions.length === 0 ? (
-            <div className="text-center text-gray-400">Aucun abonnement</div>
+            <div className="text-center text-gray-400">{t('noSubscriptions')}</div>
           ) : (
             subscriptions.map((s, idx) => (
               <div
@@ -143,7 +143,7 @@ export default function SubscriptionPage() {
                 </div>
                 <button
                   onClick={() => handleUnsubscribe(s._id || s.id)}
-                  aria-label="Se désabonner"
+                  aria-label={t('unsubscribe')}
                 >
                   <svg
                     className="w-6 h-6 text-gray-500"
@@ -166,14 +166,20 @@ export default function SubscriptionPage() {
       </div>
       <div className="fixed bottom-0 left-0 w-full">
         <div className="flex bg-white rounded-t-xl shadow">
-          <button className="flex-1 py-3 text-gray-500">Abonnés</button>
-          <button className="flex-1 py-3 font-semibold text-orange-600 bg-gray-100 rounded-tr-xl">
-            Abonnements
+          <button 
+            className="flex-1 py-3 text-gray-500"
+            onClick={() => router.push('/followers')}
+          >
+            {t('followers')}
+          </button>
+          <button 
+            className="flex-1 py-3 font-semibold text-orange-600 bg-gray-100 rounded-tr-xl"
+            onClick={() => router.push('/subscription')}
+          >
+            {t('following')}
           </button>
         </div>
       </div>
-    
     </Layout>
-
   );
 }

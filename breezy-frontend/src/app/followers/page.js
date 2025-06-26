@@ -1,13 +1,16 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/Header";
+import { useLanguage } from "@/context/LanguageContext";
 import LoadingScreen from "@/components/LoadingScreen";
-import React, { useEffect, useState } from "react";
-import SkeletonAvatar from "@/components/SkeletonAvatar";
 import Layout from "@/components/Layout";
+import SkeletonAvatar from "@/components/SkeletonAvatar";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function HomePage() {
-  const { user, loading, logout } = useAuth();
+export default function FollowersPage() {
+  const { user, loading } = useAuth();
+  const { t } = useLanguage();
+  const router = useRouter();
   const [followers, setFollowers] = useState([]);
   const [followersLoading, setFollowersLoading] = useState(true);
 
@@ -59,22 +62,22 @@ export default function HomePage() {
     }
   };
 
-  if (loading) return <LoadingScreen text="Connexion en cours..." />;
+  if (loading) return <LoadingScreen text={t('loading')} />;
   if (!user) return null;
-  if (followersLoading) return <LoadingScreen text="Chargement des abonnés" />;
+  if (followersLoading) return <LoadingScreen text={t('loadingFollowers')} />;
 
   return (
 
-      <Layout headerProps={{ title: "Follower" }}>
+      <Layout headerProps={{ title: t('followers') }}>
       <div className="px-4 py-2">
         <input
           type="text"
-          placeholder="Rechercher"
+          placeholder={t('search')}
           className="w-full mb-4 rounded-xl bg-gray-100 px-4 py-2 text-gray-500 outline-none"
         />
         <div className="space-y-3">
           {followers.length === 0 ? (
-            <div className="text-center text-gray-400">Aucun abonné</div>
+            <div className="text-center text-gray-400">{t('noFollowers')}</div>
           ) : (
             followers.map((f, idx) => (
               <div
@@ -112,10 +115,18 @@ export default function HomePage() {
       </div>
       <div className="fixed bottom-0 left-0 w-full">
         <div className="flex bg-white rounded-t-xl shadow">
-          <button className="flex-1 py-3 font-semibold text-orange-600 bg-gray-100 rounded-tl-xl">
-            Abonnés
+          <button 
+            className="flex-1 py-3 font-semibold text-orange-600 bg-gray-100 rounded-tl-xl"
+            onClick={() => router.push('/followers')}
+          >
+            {t('followers')}
           </button>
-          <button className="flex-1 py-3 text-gray-500">Abonnements</button>
+          <button 
+            className="flex-1 py-3 text-gray-500"
+            onClick={() => router.push('/subscription')}
+          >
+            {t('following')}
+          </button>
         </div>
         </div>
         </Layout >

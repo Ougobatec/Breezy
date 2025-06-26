@@ -6,12 +6,13 @@ import PostCard from "@/components/PostCard";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export default function UserProfilePage() {
     const { user: currentUser, token } = useAuth();
     const { t } = useLanguage();
     const params = useParams();
+    const router = useRouter();
     const userId = params.id;
     
     const [profileUser, setProfileUser] = useState(null);
@@ -205,14 +206,20 @@ export default function UserProfilePage() {
                         <div className="font-semibold text-gray-800">{profileUser.postsCount ?? posts.length ?? 0}</div>
                         <div>{t('posts')}</div>
                     </div>
-                    <div>
+                    <button
+                        onClick={() => router.push(`/users/${userId}/followers`)}
+                        className="hover:bg-gray-50 rounded p-1"
+                    >
                         <div className="font-semibold text-gray-800">{profileUser.followersCount ?? 0}</div>
                         <div>{t('followers')}</div>
-                    </div>
-                    <div>
+                    </button>
+                    <button
+                        onClick={() => router.push(`/users/${userId}/following`)}
+                        className="hover:bg-gray-50 rounded p-1"
+                    >
                         <div className="font-semibold text-gray-800">{profileUser.followingCount ?? 0}</div>
                         <div>{t('following')}</div>
-                    </div>
+                    </button>
                 </div>
             </div>
             <div className="text-xl font-bold p-4">

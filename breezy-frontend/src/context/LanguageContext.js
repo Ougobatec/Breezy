@@ -89,6 +89,14 @@ const translations = {
     subscriptions: "Abonnements",
     noSubscriptions: "Aucun abonnement",
     noFollowers: "Aucun abonné",
+    noFollowing: "Aucun abonnement",
+    loadingFollowers: "Chargement des abonnés...",
+    loadingSubscriptions: "Chargement des abonnements...",
+    loadingFollowing: "Chargement des abonnements...",
+    userIdToFollow: "ID utilisateur à suivre",
+    subscribeSuccess: "Abonnement réussi",
+    subscribeError: "Erreur lors de l'abonnement",
+    unsubscribeError: "Erreur lors du désabonnement",
     
     // Notifications
     notifications: "Notifications",
@@ -197,6 +205,14 @@ const translations = {
     subscriptions: "Subscriptions",
     noSubscriptions: "No subscriptions",
     noFollowers: "No followers",
+    noFollowing: "No following",
+    loadingFollowers: "Loading followers...",
+    loadingSubscriptions: "Loading subscriptions...",
+    loadingFollowing: "Loading following...",
+    userIdToFollow: "User ID to follow",
+    subscribeSuccess: "Successfully subscribed",
+    subscribeError: "Error subscribing",
+    unsubscribeError: "Error unsubscribing",
     
     // Notifications
     notifications: "Notifications",
