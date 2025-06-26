@@ -1,14 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import PrimaryButton from "@/components/PrimaryButton";
+import Cropper from "react-easy-crop";
+import getCroppedImg from "@/utils/cropImage";
 
 export default function PublishPage() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -18,11 +20,33 @@ export default function PublishPage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const fileInputRef = useRef();
+  const [originalImage, setOriginalImage] = useState(null);
+
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
-    setImagePreview(file ? URL.createObjectURL(file) : null);
+  const file = e.target.files[0];
+  if (!file) return;
+  setOriginalImage(file);
+  setImage(file);
+  setImagePreview(URL.createObjectURL(file));
+  setShowCropper(true);
+};
+
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropConfirm = async () => {
+    if (!imagePreview || !croppedAreaPixels) return;
+    const croppedFile = await getCroppedImg(imagePreview, croppedAreaPixels);
+    setImage(croppedFile);
+    setImagePreview(URL.createObjectURL(croppedFile));
+    setShowCropper(false);
   };
 
   const handleAddTag = (e) => {
@@ -57,12 +81,12 @@ export default function PublishPage() {
       );
       if (!res.ok) {
         const data = await res.json();
-        setError(data.message || t('publishError'));
+        setError(data.message || t("publishError"));
       } else {
         router.replace("/home");
       }
     } catch (e) {
-      setError(t('publishError'));
+      setError(t("publishError"));
     } finally {
       setLoading(false);
     }
@@ -71,7 +95,7 @@ export default function PublishPage() {
   if (!user) return null;
 
   return (
-    <Layout headerProps={{ title: t('publishPost'), showButtons: false }}>
+    <Layout headerProps={{ title: t("publishPost"), showButtons: false }}>
       <div className="space-y-4 p-4">
         <form
           onSubmit={handleSubmit}
@@ -93,7 +117,10 @@ export default function PublishPage() {
                 className="w-10 h-10 rounded-full mr-2 object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full mr-2 flex items-center justify-center" style={{ backgroundColor: "var(--input)" }}>
+              <div
+                className="w-10 h-10 rounded-full mr-2 flex items-center justify-center"
+                style={{ backgroundColor: "var(--input)" }}
+              >
                 <Image
                   src="/avatar.svg"
                   alt="Avatar temporaire"
@@ -111,24 +138,82 @@ export default function PublishPage() {
             </div>
           </div>
 
-          {/* Image du post */}
+          {/* Image du post avec cropper */}
           <label
             htmlFor="image-upload"
-            className="w-full aspect-[16/9] flex items-center justify-center cursor-pointer"
+            className="w-full aspect-[1/1] flex items-center justify-center cursor-pointer relative"
             style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
           >
-            {imagePreview ? (
-              <Image
-                src={imagePreview}
-                alt="preview"
-                width={600}
-                height={224}
-                className="object-cover w-full h-full"
-                style={{ width: "100%", height: "100%" }}
-                unoptimized
-              />
+            {imagePreview && showCropper ? (
+              <div style={{ position: "relative", width: "100%", height: 224 }}>
+                <Cropper
+                  image={imagePreview}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1 / 1}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+                <button
+                  type="button"
+                  onClick={handleCropConfirm}
+                  className="absolute bottom-2 right-2 z-10 bg-blue-600 text-white px-3 py-1 rounded"
+                >
+                  Valider le crop
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImage(null);
+                    setImagePreview(null);
+                    setShowCropper(false);
+                    setCroppedAreaPixels(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
+                >
+                  Changer d'image
+                </button>
+              </div>
+            ) : imagePreview ? (
+              <div className="relative w-full h-full">
+                <Image
+                  src={imagePreview}
+                  alt="preview"
+                  width={600}
+                  height={600}
+                  className="object-cover w-full h-full"
+                  style={{ width: "100%", height: "100%" }}
+                  unoptimized
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImage(originalImage);
+                    setImagePreview(URL.createObjectURL(originalImage));
+                    setShowCropper(true);
+                  }}
+                  className="absolute bottom-2 right-2 z-10 bg-blue-600 text-white px-3 py-1 rounded"
+                >
+                  Recadrer à nouveau
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImage(null);
+                    setImagePreview(null);
+                    setShowCropper(false);
+                    setCroppedAreaPixels(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="absolute bottom-2 left-2 z-10 bg-gray-600 text-white px-3 py-1 rounded"
+                >
+                  Changer d'image
+                </button>
+              </div>
             ) : (
-              <span style={{ color: "var(--text-secondary)" }}>{t('addImage')}</span>
+              <span style={{ color: "var(--text-secondary)" }}>{t("addImage")}</span>
             )}
             <input
               id="image-upload"
@@ -136,6 +221,8 @@ export default function PublishPage() {
               accept="image/*"
               className="hidden"
               onChange={handleImageChange}
+              ref={fileInputRef}
+              disabled={showCropper}
             />
           </label>
 
@@ -144,7 +231,7 @@ export default function PublishPage() {
             <textarea
               className="w-full rounded-xl border px-3 py-3 text-sm"
               style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
-              placeholder={t('writePost')}
+              placeholder={t("writePost")}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={3}
@@ -156,7 +243,7 @@ export default function PublishPage() {
               <input
                 className="w-full rounded-xl border p-3 text-sm"
                 style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
-                placeholder={t('addTag')}
+                placeholder={t("addTag")}
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
               />
@@ -166,10 +253,13 @@ export default function PublishPage() {
                 className="p-3 rounded-xl text-sm border cursor-pointer"
                 style={{ backgroundColor: "var(--input)", borderColor: "var(--border)" }}
               >
-                <Image src="/plus-grey.svg" alt={t('addTag')} width={24} height={24} />
+                <Image src="/plus-grey.svg" alt={t("addTag")} width={24} height={24} />
               </button>
             </div>
-            <div className="flex gap-1 flex-wrap text-xs" style={{ color: "var(--text-secondary)" }}>
+            <div
+              className="flex gap-1 flex-wrap text-xs"
+              style={{ color: "var(--text-secondary)" }}
+            >
               {tags.map((tagItem) => (
                 <span
                   key={tagItem}
@@ -180,8 +270,11 @@ export default function PublishPage() {
                   <button
                     type="button"
                     className="mx-1 w-4 h-4 rounded-full cursor-pointer"
-                    style={{ backgroundColor: "var(--primary)", color: "var(--text-inverted)" }}
-                    title={t('removeTag')}
+                    style={{
+                      backgroundColor: "var(--primary)",
+                      color: "var(--text-inverted)",
+                    }}
+                    title={t("removeTag")}
                     onClick={() => handleRemoveTag(tagItem)}
                   >
                     ×
@@ -192,11 +285,8 @@ export default function PublishPage() {
             {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
           </div>
           <div className="p-3.5 pt-0">
-            <PrimaryButton
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? t('publishing') : t('publish')}
+            <PrimaryButton type="submit" disabled={loading || showCropper}>
+              {loading ? t("publishing") : t("publish")}
             </PrimaryButton>
           </div>
         </form>

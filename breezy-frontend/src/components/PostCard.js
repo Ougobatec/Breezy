@@ -43,29 +43,27 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     };
 
     const handleDeletePost = async () => {
-        if (isDeleting) return;
-        if (!window.confirm(t('deletePostConfirm'))) return;
+    if (isDeleting) return;
+    if (!window.confirm(t('deletePostConfirm'))) return;
+    
+    setIsDeleting(true);
+    try {
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
+        const response = await fetch(url, {
+            method: "DELETE",
+            credentials: "include", // <-- Ajoute cette ligne
+        });
         
-        setIsDeleting(true);
-        try {
-            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}`;
-            const response = await fetch(url, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            
-            if (response.ok && onDeletePost) {
-                onDeletePost(postId);
-            } else {
-                alert(t('deleteError'));
-            }
-        } catch (error) {
+        if (response.ok && onDeletePost) {
+            onDeletePost(postId);
+        } else {
             alert(t('deleteError'));
         }
-        setIsDeleting(false);
-        setShowMenu(false);
+    } catch (error) {
+        alert(t('deleteError'));
+    }
+    setIsDeleting(false);
+    setShowMenu(false);
     };
 
     const toggleMenu = () => {
@@ -165,9 +163,9 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                 <Image
                     src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${post.media}`}
                     alt="post"
-                    className="w-full aspect-[16/9] object-cover mb-2"
+                    className="w-full aspect-[1/1] object-cover mb-2"
                     width={600}
-                    height={224}
+                    height={600}
                 />
             )}
 
