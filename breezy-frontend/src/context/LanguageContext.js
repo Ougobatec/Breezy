@@ -55,6 +55,10 @@ const translations = {
     french: "Français",
     english: "English",
     selectLanguage: "Sélectionner une langue",
+    theme: "Thème",
+    light: "Clair",
+    dark: "Sombre",
+    system: "Système",
     
     // Messages
     welcomeMessage: "Bienvenue",
@@ -124,6 +128,10 @@ const translations = {
     french: "Français",
     english: "English",
     selectLanguage: "Select a language",
+    theme: "Theme",
+    light: "Light",
+    dark: "Dark",
+    system: "System",
     
     // Messages
     welcomeMessage: "Welcome",
