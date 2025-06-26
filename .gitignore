@@ -4,6 +4,11 @@
 # Customize this file to your liking, or delete it if you don't need it.
 breezy-backend/uploads/*
 
+# Deployment files
+breezy-deployment/
+*.tar
+export-images.ps1.log
+
 ### NextJS ###
 # dependencies
 /node_modules
@@ -190,3 +195,4 @@ psd
 thumb
 sketch
 
+docker-compose.prod.yml
