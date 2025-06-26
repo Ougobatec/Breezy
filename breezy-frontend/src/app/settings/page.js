@@ -10,18 +10,6 @@ export default function SettingsPage() {
   const { language, changeLanguage, t } = useLanguage();
   const { theme, changeTheme } = useTheme();
 
-  const handleLanguageChange = (newLanguage) => {
-    changeLanguage(newLanguage);
-  };
-
-  const handleThemeChange = (newTheme) => {
-    changeTheme(newTheme);
-  };
-
-  const handleLogout = () => {
-    logout();
-  };
-
   if (loading) return <LoadingScreen text={t('loading')} />;
   if (!user) return null;
 
@@ -35,11 +23,11 @@ export default function SettingsPage() {
           </h2>
           <div className="space-y-2">
             <button
-              onClick={() => handleLanguageChange('fr')}
+              onClick={() => changeLanguage('fr')}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between ${
                 language === 'fr' ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
-              style={{ 
+              style={{
                 backgroundColor: language === 'fr' ? 'var(--primary)20' : 'var(--card)',
                 borderColor: language === 'fr' ? 'var(--primary)' : 'var(--border)',
                 color: "var(--text-primary)"
@@ -50,13 +38,12 @@ export default function SettingsPage() {
                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "var(--primary)" }}></div>
               )}
             </button>
-            
             <button
-              onClick={() => handleLanguageChange('en')}
+              onClick={() => changeLanguage('en')}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between ${
                 language === 'en' ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
-              style={{ 
+              style={{
                 backgroundColor: language === 'en' ? 'var(--primary)20' : 'var(--card)',
                 borderColor: language === 'en' ? 'var(--primary)' : 'var(--border)',
                 color: "var(--text-primary)"
@@ -77,11 +64,11 @@ export default function SettingsPage() {
           </h2>
           <div className="space-y-2">
             <button
-              onClick={() => handleThemeChange('light')}
+              onClick={() => changeTheme('light')}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between ${
                 theme === 'light' ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
-              style={{ 
+              style={{
                 backgroundColor: theme === 'light' ? 'var(--primary)20' : 'var(--card)',
                 borderColor: theme === 'light' ? 'var(--primary)' : 'var(--border)',
                 color: "var(--text-primary)"
@@ -92,13 +79,12 @@ export default function SettingsPage() {
                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "var(--primary)" }}></div>
               )}
             </button>
-            
             <button
-              onClick={() => handleThemeChange('dark')}
+              onClick={() => changeTheme('dark')}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between ${
                 theme === 'dark' ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
-              style={{ 
+              style={{
                 backgroundColor: theme === 'dark' ? 'var(--primary)20' : 'var(--card)',
                 borderColor: theme === 'dark' ? 'var(--primary)' : 'var(--border)',
                 color: "var(--text-primary)"
@@ -109,13 +95,12 @@ export default function SettingsPage() {
                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "var(--primary)" }}></div>
               )}
             </button>
-
             <button
-              onClick={() => handleThemeChange('system')}
+              onClick={() => changeTheme('system')}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between ${
                 theme === 'system' ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
-              style={{ 
+              style={{
                 backgroundColor: theme === 'system' ? 'var(--primary)20' : 'var(--card)',
                 borderColor: theme === 'system' ? 'var(--primary)' : 'var(--border)',
                 color: "var(--text-primary)"
@@ -129,13 +114,38 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Section Administration */}
+        {(user?.role === 'moderator' || user?.role === 'admin') && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+              Administration
+            </h2>
+            <button
+              onClick={() => window.location.href = '/admin'}
+              className="w-full p-3 rounded-xl border text-left flex items-center justify-between"
+              style={{
+                backgroundColor: 'var(--card)',
+                borderColor: 'var(--border)',
+                color: "var(--text-primary)"
+              }}
+            >
+              <span>
+                {user?.role === 'admin' ? 'Panel Administrateur' : 'Panel Modérateur'}
+              </span>
+              <div className="text-sm opacity-70">
+                {user?.role === 'admin' ? '👑' : '🛡️'}
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Section Compte */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
             Compte
           </h2>
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="w-full p-3 rounded-xl border border-red-300 text-red-600 hover:bg-red-50"
           >
             {t('logout')}

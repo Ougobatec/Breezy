@@ -16,6 +16,9 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     const [isDeleting, setIsDeleting] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [showShareMessage, setShowShareMessage] = useState(false);
+    const [showReportDialog, setShowReportDialog] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [isReporting, setIsReporting] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
     const videoRef = useRef(null);
     const postId = post._id || post.id;
@@ -153,12 +156,52 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
     }, [showMenu]);
 
     // Vérifier si l'utilisateur actuel peut supprimer ce post
-    const canDeletePost = showDeleteOption && currentUser && post.user_id && (
+    const canDeletePost = currentUser && post.user_id && (
+        // Propriétaire du post
         currentUser.id === post.user_id?._id || 
         currentUser._id === post.user_id?._id ||
         currentUser.id === post.user_id ||
-        currentUser._id === post.user_id
+        currentUser._id === post.user_id ||
+        // Modérateur ou admin (si showDeleteOption est activé)
+        (showDeleteOption && (currentUser.role === 'moderator' || currentUser.role === 'admin'))
     );
+
+    const handleReportPost = () => {
+        setShowReportDialog(true);
+        setShowMenu(false);
+    };
+
+    const submitReport = async () => {
+        if (!reportReason.trim()) {
+            alert('Veuillez sélectionner une raison pour le signalement');
+            return;
+        }
+
+        setIsReporting(true);
+        try {
+            const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/posts/${postId}/report`;
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ reason: reportReason })
+            });
+            
+            if (response.ok) {
+                alert(t('reportSuccess') || 'Post signalé avec succès');
+                setShowReportDialog(false);
+                setReportReason("");
+            } else {
+                const data = await response.json();
+                alert(data.message || t('reportError') || 'Erreur lors du signalement');
+            }
+        } catch (error) {
+            alert(t('reportError') || 'Erreur lors du signalement');
+        }
+        setIsReporting(false);
+    };
 
     return (
         <div className="relative rounded-xl overflow-hidden border" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
@@ -217,18 +260,42 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                         alt="Options" 
                         size={24} 
                         className="p-1"
-                        onClick={canDeletePost ? toggleMenu : undefined}
-                        style={{ cursor: canDeletePost ? 'pointer' : 'default' }}
+                        onClick={currentUser ? toggleMenu : undefined}
+                        style={{ cursor: currentUser ? 'pointer' : 'default' }}
                     />
-                    {showMenu && canDeletePost && (
-                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow z-10" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-                            <button
-                                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-800 text-sm"
-                                onClick={handleDeletePost}
-                                disabled={isDeleting}
-                            >
-                                {isDeleting ? `${t('delete')}...` : t('delete')}
-                            </button>
+                    {showMenu && currentUser && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow z-10" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+                            {canDeletePost && (
+                                <button
+                                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-800 text-sm border-b"
+                                    style={{ borderColor: "var(--border)" }}
+                                    onClick={handleDeletePost}
+                                    disabled={isDeleting}
+                                >
+                                    {isDeleting ? `${t('delete')}...` : t('delete')}
+                                </button>
+                            )}
+                            {/* Option de signalement pour tous les utilisateurs connectés (sauf sur leurs propres posts) */}
+                            {!(currentUser.id === post.user_id?._id || 
+                               currentUser._id === post.user_id?._id ||
+                               currentUser.id === post.user_id ||
+                               currentUser._id === post.user_id) && (
+                                <button
+                                    className="w-full text-left px-4 py-2 text-orange-600 hover:bg-orange-50 hover:text-orange-800 text-sm"
+                                    onClick={handleReportPost}
+                                >
+                                    🚨 {t('report') || 'Signaler'}
+                                </button>
+                            )}
+                            {/* Si l'utilisateur ne peut ni supprimer ni signaler, afficher un message */}
+                            {!canDeletePost && (currentUser.id === post.user_id?._id || 
+                                                currentUser._id === post.user_id?._id ||
+                                                currentUser.id === post.user_id ||
+                                                currentUser._id === post.user_id) && (
+                                <div className="px-4 py-2 text-sm text-gray-500 text-center">
+                                    Votre post
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -354,6 +421,66 @@ export default function PostCard({ post, token, currentUser, onLikeUpdate, onDel
                     onClose={() => setShowComments(false)}
                 />
             </div>
+
+            {/* Dialog de signalement */}
+            {showReportDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] p-4">
+                    <div 
+                        className="bg-white rounded-lg p-6 w-full max-w-md"
+                        style={{ backgroundColor: "var(--card)", color: "var(--text-primary)" }}
+                    >
+                        <h3 className="text-lg font-semibold mb-4">Signaler ce post</h3>
+                        <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
+                            Pourquoi signalez-vous ce post ?
+                        </p>
+                        
+                        <div className="space-y-2 mb-6">
+                            {[
+                                { value: "Contenu inapproprié", label: "Contenu inapproprié" },
+                                { value: "Spam", label: "Spam ou contenu commercial" },
+                                { value: "Harcèlement", label: "Harcèlement ou intimidation" },
+                                { value: "Discours de haine", label: "Discours de haine" },
+                                { value: "Violence", label: "Violence ou contenu violent" },
+                                { value: "Désinformation", label: "Fausses informations" },
+                                { value: "Autre", label: "Autre raison" }
+                            ].map((reason) => (
+                                <label key={reason.value} className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="reportReason"
+                                        value={reason.value}
+                                        checked={reportReason === reason.value}
+                                        onChange={(e) => setReportReason(e.target.value)}
+                                        className="text-red-500"
+                                    />
+                                    <span className="text-sm">{reason.label}</span>
+                                </label>
+                            ))}
+                        </div>
+                        
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => {
+                                    setShowReportDialog(false);
+                                    setReportReason("");
+                                }}
+                                className="px-4 py-2 text-sm border rounded hover:bg-gray-50"
+                                style={{ borderColor: "var(--border)" }}
+                                disabled={isReporting}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={submitReport}
+                                disabled={!reportReason.trim() || isReporting}
+                                className="px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isReporting ? 'Signalement...' : 'Signaler'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -32,7 +32,7 @@ const notificationController = {
             let filter = { user_id: userId };
             
             // Filtrer par type si spécifié
-            if (type && ['like', 'comment', 'follow', 'mention'].includes(type)) {
+            if (type && ['like', 'comment', 'follow', 'mention', 'report', 'moderation', 'role_change'].includes(type)) {
                 filter.type = type;
             }
             

@@ -30,6 +30,10 @@ export default function PublishPage() {
   const [video, setVideo] = useState(null);
   const [videoFrame, setVideoFrame] = useState(null);
 
+
+  // Vérifier si l'utilisateur peut publier
+  const canPublish = user && !user.suspended && !user.banned;
+
   function handleMediaChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -63,6 +67,7 @@ export default function PublishPage() {
       });
     }
   }
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -104,7 +109,11 @@ export default function PublishPage() {
     try {
       const formData = new FormData();
       formData.append("content", content);
-      tags.forEach((t) => formData.append("tags[]", t));
+      if (tags.length === 0) {
+        formData.append("tags", "");
+      } else {
+        tags.forEach((t) => formData.append("tags", t));
+      }
       if (image) formData.append("image", image);
       else if (video) formData.append("image", video);
 
@@ -135,6 +144,36 @@ export default function PublishPage() {
   };
 
   if (!user) return null;
+
+  // Si l'utilisateur est suspendu ou banni, afficher un message
+  if (!canPublish) {
+    return (
+      <Layout headerProps={{ title: t("publishPost"), showButtons: false }}>
+        <div className="p-4">
+          <div className="bg-red-100 border-l-4 border-red-500 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-red-500 text-xl">🚫</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  <strong>
+                    {user.banned ? 'Compte banni' : 'Compte suspendu'}
+                  </strong>
+                </p>
+                <p className="text-sm text-red-600 mt-1">
+                  {user.banned 
+                    ? 'Votre compte a été banni. Vous ne pouvez plus publier de contenu.'
+                    : 'Votre compte est suspendu. Vous ne pouvez pas publier de contenu jusqu\'à ce que la suspension soit levée.'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout headerProps={{ title: t("publishPost"), showButtons: false }}>
@@ -348,7 +387,10 @@ export default function PublishPage() {
             {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
           </div>
           <div className="p-3.5 pt-0">
-            <PrimaryButton type="submit" disabled={loading || showCropper}>
+            <PrimaryButton 
+              type="submit" 
+              disabled={loading || (showCropper && imagePreview)}
+            >
               {loading ? t("publishing") : t("publish")}
             </PrimaryButton>
           </div>
