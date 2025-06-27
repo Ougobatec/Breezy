@@ -14,7 +14,7 @@ const searchController = {
             const searchRegex = new RegExp(query.trim(), 'i');
             const results = {};
 
-            // Rechercher des utilisateurs si type = 'all' ou 'users'
+            // Recherche d'utilisateurs si type = 'all' ou 'users'
             if (type === 'all' || type === 'users') {
                 const users = await UserModel.find({
                     $or: [
@@ -31,7 +31,26 @@ const searchController = {
             // Rechercher dans les posts si type = 'all' ou 'posts'
             if (type === 'all' || type === 'posts') {
                 const posts = await PostModel.find({
-                    content: searchRegex
+                    $or: [
+                        { content: searchRegex },
+                        { tags: { $in: [searchRegex] } }
+                    ]
+                })
+                .populate('user_id', 'username name avatar')
+                .sort({ createdAt: -1 })
+                .limit(parseInt(limit));
+                
+                results.posts = posts;
+            }
+
+            // Rechercher par tags si type = 'tags'
+            if (type === 'tags') {
+                // Supprimer le # du début si présent pour la recherche de tags
+                const cleanQuery = query.trim().replace(/^#/, '');
+                const tagRegex = new RegExp(cleanQuery, 'i');
+                
+                const posts = await PostModel.find({
+                    tags: { $in: [tagRegex] }
                 })
                 .populate('user_id', 'username name avatar')
                 .sort({ createdAt: -1 })
@@ -96,6 +115,33 @@ const searchController = {
             res.status(200).json(posts);
         } catch (error) {
             console.error("Erreur lors de la recherche de mentions :", error);
+            res.status(500).json({ message: "Erreur lors de la recherche", error: error.message });
+        }
+    },
+
+    // Recherche par tags uniquement
+    searchTags: async (req, res) => {
+        try {
+            const { query, limit = 10 } = req.query;
+            
+            if (!query || query.trim().length < 2) {
+                return res.status(400).json({ message: "La recherche doit contenir au moins 2 caractères" });
+            }
+
+            // Supprimer le # du début si présent
+            const cleanQuery = query.trim().replace(/^#/, '');
+            const searchRegex = new RegExp(cleanQuery, 'i');
+            
+            const posts = await PostModel.find({
+                tags: { $in: [searchRegex] }
+            })
+            .populate('user_id', 'username name avatar')
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit));
+
+            res.status(200).json(posts);
+        } catch (error) {
+            console.error("Erreur lors de la recherche par tags :", error);
             res.status(500).json({ message: "Erreur lors de la recherche", error: error.message });
         }
     }

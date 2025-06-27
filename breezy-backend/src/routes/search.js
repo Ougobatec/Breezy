@@ -13,4 +13,7 @@ searchRouter.get('/users', authMiddleware, searchController.searchUsers);
 // Recherche de mentions
 searchRouter.get('/mentions', authMiddleware, searchController.searchMentions);
 
+// Recherche par tags uniquement
+searchRouter.get('/tags', authMiddleware, searchController.searchTags);
+
 export default searchRouter;
