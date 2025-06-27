@@ -20,16 +20,31 @@ export function ThemeProvider({ children }) {
     if (!theme) return;
     const html = document.documentElement;
 
-    // Retirer toutes les classes de thème
-    html.classList.remove('light', 'dark', 'system');
+    // Retirer la classe dark
+    html.classList.remove('dark');
 
-    // Appliquer la classe correspondante
-    html.classList.add(theme);
+    // Appliquer le thème approprié
+    if (theme === 'dark') {
+      html.classList.add('dark');
+    } else if (theme === 'system') {
+      // Pour le mode système, vérifier la préférence
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        html.classList.add('dark');
+      }
+    }
+    // Pour 'light', on ne fait rien (pas de classe)
 
     // Pour le mode système, écouter les changements de préférence
     let mediaQuery;
-    const handleChange = () => {
-      // Pas besoin de faire quoi que ce soit, le CSS gère tout
+    const handleChange = (e) => {
+      if (theme === 'system') {
+        if (e.matches) {
+          html.classList.add('dark');
+        } else {
+          html.classList.remove('dark');
+        }
+      }
     };
 
     if (theme === 'system') {
