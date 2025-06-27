@@ -103,8 +103,6 @@ export default function AdminPanel() {
     }, [loadData, isModerator]);
 
     const changeUserRole = async (userId, newRole) => {
-        if (!window.confirm(t('admin.confirmChangeRole', { role: newRole }))) return;
-        
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${userId}/role`, {
                 method: 'PUT',
@@ -116,27 +114,14 @@ export default function AdminPanel() {
             });
             
             if (response.ok) {
-                alert(t('admin.roleChangedSuccess'));
                 loadUsers();
-            } else {
-                const data = await response.json();
-                alert(data.message || t('admin.roleChangeError'));
             }
         } catch (error) {
-            alert(t('admin.roleChangeError'));
+            // Erreur silencieuse
         }
     };
 
     const moderateUser = async (userId, action, reason = '') => {
-        const actionText = {
-            suspend: t('admin.actions.suspend'),
-            unsuspend: t('admin.actions.unsuspend'),
-            ban: t('admin.actions.ban'),
-            unban: t('admin.actions.unban')
-        };
-        
-        if (!window.confirm(t('admin.confirmAction', { action: actionText[action] }))) return;
-        
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${userId}/moderate`, {
                 method: 'PUT',
@@ -148,21 +133,14 @@ export default function AdminPanel() {
             });
             
             if (response.ok) {
-                alert(t('admin.actionSuccess'));
                 loadUsers();
-            } else {
-                const data = await response.json();
-                alert(data.message || t('admin.actionError'));
             }
         } catch (error) {
-            alert(t('admin.actionError'));
+            // Erreur silencieuse
         }
     };
 
     const resolveReport = async (postId, action) => {
-        const actionText = action === 'delete' ? t('admin.deletePost') : t('admin.ignoreReports');
-        if (!window.confirm(t('admin.confirmAction', { action: actionText }))) return;
-        
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/posts/${postId}/resolve`, {
                 method: 'PUT',
@@ -174,14 +152,10 @@ export default function AdminPanel() {
             });
             
             if (response.ok) {
-                alert(t('admin.actionSuccess'));
                 loadReportedPosts();
-            } else {
-                const data = await response.json();
-                alert(data.message || t('admin.actionError'));
             }
         } catch (error) {
-            alert(t('admin.actionError'));
+            // Erreur silencieuse
         }
     };
 
