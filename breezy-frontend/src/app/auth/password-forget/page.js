@@ -1,5 +1,5 @@
 "use client";
-import Header from "@/components/Header";
+import Layout from "@/components/Layout";
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,13 +19,14 @@ export default function PasswordForgetPage() {
         setLoading(true);
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/password-forget`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/password-forget`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         username: values.username
                     }),
+                    credentials: "include",
                 }
             );
             const data = await res.json();
@@ -42,29 +43,22 @@ export default function PasswordForgetPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <Header title="Mot de passe oublié" showButtons={false} />
-
-            {/* Contenu central */}
-            <div className="flex-1 flex flex-col justify-center px-4">
-                <div className="mb-6">
-                    <div className="text-2xl font-bold text-center">
-                        Retrouvez votre mot de passe
-                    </div>
+        <Layout headerProps={{ title: "Mot de passe oublié", showButtons: false }} showNav={false}>
+            <div className="flex flex-col justify-center gap-4 flex-1 p-4">
+                <div className="text-2xl font-bold text-center">
+                    Retrouvez votre mot de passe
                 </div>
-                <div className="mb-4">
-                    <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
-                        Retour à la connexion
-                    </Link>
-                </div>
+                <Link href="/auth/login" className="text-blue-600 text-sm hover:underline">
+                    Retour à la connexion
+                </Link>
                 <AuthForm
                     fields={fields}
                     onSubmit={handleForget}
                     submitLabel={loading ? "Envoi..." : "Envoyer"}
                 />
-                {error && <div className="text-red-600 text-sm mt-4">{error}</div>}
-                {success && <div className="text-green-600 text-sm mt-4">{success}</div>}
+                {error && <div className="text-red-600 text-sm">{error}</div>}
+                {success && <div className="text-green-600 text-sm">{success}</div>}
             </div>
-        </div>
+        </Layout>
     );
 }

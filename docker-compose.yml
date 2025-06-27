@@ -1,37 +1,34 @@
 services:
-  frontend:
-    build:
-      context: ./breezy-frontend
-      dockerfile: Dockerfile
-    container_name: breezy-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_BACKEND_URL= ${NEXT_PUBLIC_BACKEND_URL}
-    depends_on:
-      - backend
-    networks:
-      - breezy-net
-
   backend:
     build:
       context: ./breezy-backend
       dockerfile: Dockerfile
     container_name: breezy-backend
-    ports:
-      - "5000:5000"
-    environment:
-      - FRONTEND_URL=http://localhost:3000
-      - MONGODB_URI=mongodb://mongo:27017/breezy
-      - PORT=5000
-      - JWT_SECRET= ${JWT_SECRET}
-      - SMTP_HOST= ${SMTP_HOST}
-      - SMTP_PORT= ${SMTP_PORT}
-      - SMTP_USER= ${SMTP_USER}
-      - SMTP_PASS= ${SMTP_PASS}
-      - NODE_ENV = production
+    env_file:
+      - ./breezy-backend/.env.production
     depends_on:
       - mongo
+    networks:
+      - breezy-net
+
+  frontend:
+    build:
+      context: ./breezy-frontend
+      dockerfile: Dockerfile
+    container_name: breezy-frontend
+    depends_on:
+      - backend
+    networks:
+      - breezy-net
+
+  nginx:
+    image: nginx:latest
+    container_name: balancer
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    restart: always
     networks:
       - breezy-net
 
@@ -45,11 +42,22 @@ services:
     networks:
       - breezy-net
 
-
-
-
-      
-
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin123}
+      # ME_CONFIG_SITE_BASEURL: /adminmongoexpress/
+    depends_on:
+      - mongo
+    ports:
+      - "10587:8081"
+    networks:
+      - breezy-net
 
 volumes:
   mongo-data:

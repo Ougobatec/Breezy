@@ -1,22 +1,25 @@
-import React from 'react';
 import Link from 'next/link';
+import Layout from '@/components/Layout';
+import PrimaryButton from '@/components/PrimaryButton';
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="p-4 text-center" style={{ backgroundColor: "var(--primary)", color: "var(--text-inverted)" }}>
-        <h1 className="text-3xl font-bold">Bienvenue sur Breezy</h1>
-      </header>
-
-      <main className="flex-1 flex flex-col justify-center items-center px-4">
-        <div className="text-2xl font-bold mb-6">Bienvenue sur Breezy</div>
-        <p className="text-center mb-4">
-            Le reseau social léger et rapide pour partager vos pensées et vos passions.
-        </p>
-        <Link href="/auth/login" className="text-blue-600 hover:underline">
-          Se connecter
-        </Link>
-      </main>
-    </div>
+    <Layout headerProps={{ showButtons: false }} showNav={false}>
+      <div className="flex flex-col flex-1">
+        <div className="flex flex-col justify-center items-center gap-6 flex-1 p-4">
+          <h1 className="text-3xl font-bold text-center" style={{ color: "var(--primary)" }}>
+            Bienvenue sur Breezy
+          </h1>
+          <p className="text-center">
+            Le réseau social léger et rapide pour partager vos pensées et vos passions.
+          </p>
+        </div>
+        <div className="p-4">
+          <PrimaryButton href="/auth/login" type="button">
+            Se connecter
+          </PrimaryButton>
+        </div>
+      </div>
+    </Layout>
   );
 }
