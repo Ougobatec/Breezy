@@ -12,5 +12,6 @@ authRouter.post("/logout", authController.logout);
 authRouter.post("/password-forget", requireFields(['username']), authController.passwordForget);
 authRouter.post("/password-reset", requireFields(['token', 'newPassword']), authController.passwordReset);
 authRouter.get("/authenticate", authMiddleware, authController.authenticate);
+authRouter.post("/google", authController.googleAuth);
 
 export default authRouter;

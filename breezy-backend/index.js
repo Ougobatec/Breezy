@@ -9,9 +9,14 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/breezy';
 
+// Configuration CORS améliorée pour éviter les problèmes de slash final
+const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [frontendUrl, 'http://localhost:3000'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
 app.use(cookieParser());
 app.use(express.json());
@@ -23,8 +28,12 @@ import routeurPost from '#routes/post.js'
 import routeurAuth from '#routes/auth.js'
 import routeurUser from '#routes/user.js'
 import routerComment from '#routes/comment.js'
+import routerNotification from '#routes/notification.js'
+import routerAdmin from '#routes/admin.js'
+import routerSearch from '#routes/search.js'
 
 app.use('/uploads/avatars', express.static('/uploads/avatars'))
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get('/', (req, res) => res.send('Welcome to Breezy Backend!'));
 
@@ -34,6 +43,9 @@ app.use('/posts', routeurPost);
 app.use('/users', routeurUser);
 app.use('/sub', routerSub);
 app.use('/comments', routerComment);
+app.use('/notifications', routerNotification);
+app.use('/admin', routerAdmin);
+app.use('/search', routerSearch);
 
 
 // app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
