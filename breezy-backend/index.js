@@ -4,6 +4,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -51,6 +52,27 @@ app.use('/search', routerSearch);
 // app.get('/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').getPostLikes);
 
 // app.put('/posts/:id/like', require('./src/middlewares/auth.middleware'), require('./src/controllers/post.controller').likePost);
+
+// Fonction pour créer les dossiers d'uploads nécessaires
+function ensureUploadDirectories() {
+    const uploadDirs = [
+        'uploads',
+        'uploads/avatars',
+        'uploads/posts'
+    ];
+    
+    uploadDirs.forEach(dir => {
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+            console.log(`✓ Dossier créé: ${dir}`);
+        } else {
+            console.log(`✓ Dossier existant: ${dir}`);
+        }
+    });
+}
+
+// Initialiser les dossiers d'uploads
+ensureUploadDirectories();
 
 mongoose.connect(MONGO_URI)
 .then(() => {
